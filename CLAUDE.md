@@ -41,6 +41,7 @@ LEGACY_API_BASE_URL=http://127.0.0.1:33552
 LEGACY_ADMIN_ID=master
 LEGACY_ADMIN_PASS=649005
 USE_MOCK_DATA=true
+USE_HTTPS=false          # HTTPS 적용 시 true로 변경
 ```
 
 Set `USE_MOCK_DATA=true` for development without the legacy API server.

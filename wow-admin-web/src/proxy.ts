@@ -23,6 +23,10 @@ export async function proxy(request: NextRequest) {
 
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("FATAL: AUTH_SECRET not set in production");
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
     // AUTH_SECRET 미설정 시 인증 건너뜀 (개발 편의)
     return NextResponse.next();
   }

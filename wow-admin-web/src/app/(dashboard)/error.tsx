@@ -10,7 +10,9 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Page Error] digest:", error.digest);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Page Error] digest:", error.digest);
+    }
   }, [error]);
 
   return (

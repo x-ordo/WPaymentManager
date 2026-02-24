@@ -30,12 +30,18 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 요청 직렬화 큐: 동시에 최대 1개 요청만 레거시 API에 전송
 let requestQueue: Promise<void> = Promise.resolve();
+const MAX_QUEUE_DEPTH = 50;
+let queueDepth = 0;
 
 function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  if (queueDepth >= MAX_QUEUE_DEPTH) {
+    return Promise.reject(new Error("요청 큐 초과"));
+  }
+  queueDepth++;
   const result = requestQueue.then(fn, fn);
   requestQueue = result.then(
-    () => {},
-    () => {}
+    () => { queueDepth--; },
+    () => { queueDepth--; }
   );
   return result;
 }
@@ -102,10 +108,20 @@ async function authenticate(): Promise<void> {
  * 레거시 API 호출. 401(쓰로틀), 402(세션 만료) 자동 재시도.
  * 루프 기반 재시도로 enqueue 내 재귀 호출 교착 상태를 방지.
  */
+const FETCH_TIMEOUT_MS = 15_000;
+const DANGEROUS_KEYS = ["__proto__", "constructor", "prototype"];
+
 export async function fetchLegacy(
   path: string,
   params: Record<string, string> = {}
 ): Promise<any> {
+  // Prototype pollution 방어
+  for (const key of Object.keys(params)) {
+    if (DANGEROUS_KEYS.includes(key)) {
+      return { code: "999", message: "잘못된 요청 파라미터" };
+    }
+  }
+
   if (USE_MOCK) {
     await delay(100);
     return getMockResponse(path);
@@ -132,15 +148,23 @@ export async function fetchLegacy(
           ...params,
         };
         const searchParams = new URLSearchParams(requestParams);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         try {
           const response = await fetch(
             `${BASE_URL!}${path}?${searchParams.toString()}`,
-            { method: "GET", cache: "no-store" }
+            { method: "GET", cache: "no-store", signal: controller.signal }
           );
           return await response.json();
         } catch (error: unknown) {
-          console.error(`[API 통신 장애] ${path}`, error);
+          if (error instanceof DOMException && error.name === "AbortError") {
+            console.error(`[API 타임아웃] ${path}`);
+            return { code: "999", message: "요청 시간 초과" };
+          }
+          console.error(`[API 통신 장애] ${path}:`, error instanceof Error ? error.message : "Unknown error");
           return { code: "999", message: "서버 통신 실패" };
+        } finally {
+          clearTimeout(timeoutId);
         }
       });
 

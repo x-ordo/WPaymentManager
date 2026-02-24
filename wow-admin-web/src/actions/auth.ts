@@ -3,6 +3,38 @@
 import { redirect } from "next/navigation";
 import { login, logout } from "@/lib/auth";
 
+// 인메모리 로그인 Rate Limiter
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5분
+
+function checkRateLimit(username: string): string | null {
+  const now = Date.now();
+  const entry = loginAttempts.get(username);
+
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= MAX_LOGIN_ATTEMPTS) {
+      const remainSec = Math.ceil((entry.resetAt - now) / 1000);
+      return `로그인 시도 횟수 초과. ${remainSec}초 후 다시 시도해 주세요.`;
+    }
+  }
+  return null;
+}
+
+function recordLoginAttempt(username: string, success: boolean): void {
+  const now = Date.now();
+  if (success) {
+    loginAttempts.delete(username);
+    return;
+  }
+  const entry = loginAttempts.get(username);
+  if (!entry || now >= entry.resetAt) {
+    loginAttempts.set(username, { count: 1, resetAt: now + LOCKOUT_DURATION_MS });
+  } else {
+    entry.count++;
+  }
+}
+
 export async function loginAction(
   _prevState: { error: string } | null,
   formData: FormData
@@ -14,12 +46,22 @@ export async function loginAction(
     return { error: "아이디와 비밀번호를 입력하세요." };
   }
 
+  // Rate limit 체크
+  const rateLimitMsg = checkRateLimit(username);
+  if (rateLimitMsg) {
+    return { error: rateLimitMsg };
+  }
+
   const result = await login(username, password);
 
   if (!result.success) {
+    recordLoginAttempt(username, false);
+    // 실패 시 1초 지연 (brute-force 방어)
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return { error: result.message };
   }
 
+  recordLoginAttempt(username, true);
   redirect("/");
 }
 
