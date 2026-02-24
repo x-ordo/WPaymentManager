@@ -31,165 +31,125 @@ export default async function DepositsPage(props: {
       {/* Header & Tabs */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-5">
-          <h1 className="text-xl font-bold text-ink-primary tracking-tight">입금 통합 관리</h1>
-          <div className="flex bg-surface-muted p-0.5 rounded-md border border-border-subtle">
+          <h1 className="text-xl font-bold tracking-tight">입금 통합 관리</h1>
+          <div role="tablist" className="tabs tabs-box tabs-sm">
             <a
+              role="tab"
               href={`/deposits?tab=application&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
-              className={`px-5 py-2 text-sm font-semibold rounded-md transition-colors duration-fast ${
-                tab === "application"
-                  ? "bg-surface-card text-ink-primary shadow-xs"
-                  : "text-ink-tertiary hover:text-ink-secondary"
-              }`}
+              className={`tab font-semibold ${tab === "application" ? "tab-active" : ""}`}
             >
               입금 신청 내역
               {appData.length > 0 && (
-                <span className="ml-1.5 text-2xs font-bold text-ink-muted tabular-nums">{appData.length}</span>
+                <span className="badge badge-sm badge-ghost ml-1.5 font-mono">{appData.length}</span>
               )}
             </a>
             <a
+              role="tab"
               href={`/deposits?tab=notification&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
-              className={`px-5 py-2 text-sm font-semibold rounded-md transition-colors duration-fast ${
-                tab === "notification"
-                  ? "bg-surface-card text-ink-primary shadow-xs"
-                  : "text-ink-tertiary hover:text-ink-secondary"
-              }`}
+              className={`tab font-semibold ${tab === "notification" ? "tab-active" : ""}`}
             >
               입금 통지 이력
               {notiData.length > 0 && (
-                <span className="ml-1.5 text-2xs font-bold text-ink-muted tabular-nums">{notiData.length}</span>
+                <span className="badge badge-sm badge-ghost ml-1.5 font-mono">{notiData.length}</span>
               )}
             </a>
           </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="flex gap-4">
-        <div className="flex-1 bg-surface-card border border-border-default rounded-lg shadow-xs overflow-hidden">
-          <div className="flex">
-            <div className="w-1 bg-primary shrink-0" />
-            <div className="p-4 flex-1">
-              <div className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">총 입금액</div>
-              <div className="text-xl font-bold text-ink-primary font-mono tabular-nums tracking-tight">
-                {totalAmount.toLocaleString()}<span className="text-xs text-ink-tertiary font-medium ml-1">원</span>
-              </div>
-            </div>
+      {/* Summary Stats */}
+      <div className="stats stats-horizontal shadow w-full">
+        <div className="stat">
+          <div className="stat-title">총 입금액</div>
+          <div className="stat-value text-xl font-mono tabular-nums">
+            {totalAmount.toLocaleString()}<span className="text-xs text-base-content/40 font-medium ml-1">원</span>
           </div>
         </div>
-        <div className="flex-1 bg-surface-card border border-border-default rounded-lg shadow-xs overflow-hidden">
-          <div className="flex">
-            <div className="w-1 bg-status-success shrink-0" />
-            <div className="p-4 flex-1">
-              <div className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">
-                {tab === "application" ? "접수 완료" : "처리 완료"}
-              </div>
-              <div className="text-xl font-bold text-status-success-strong font-mono tabular-nums tracking-tight">
-                {successCount}<span className="text-xs text-ink-tertiary font-medium ml-1">건</span>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-title">{tab === "application" ? "접수 완료" : "처리 완료"}</div>
+          <div className="stat-value text-xl font-mono tabular-nums text-success">
+            {successCount}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
           </div>
         </div>
         {tab === "notification" && (
-          <div className="flex-1 bg-surface-card border border-border-default rounded-lg shadow-xs overflow-hidden">
-            <div className="flex">
-              <div className="w-1 bg-status-warning shrink-0" />
-              <div className="p-4 flex-1">
-                <div className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">미처리</div>
-                <div className="text-xl font-bold text-status-warning-strong font-mono tabular-nums tracking-tight">
-                  {pendingCount}<span className="text-xs text-ink-tertiary font-medium ml-1">건</span>
-                </div>
-              </div>
+          <div className="stat">
+            <div className="stat-title">미처리</div>
+            <div className="stat-value text-xl font-mono tabular-nums text-warning">
+              {pendingCount}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
             </div>
           </div>
         )}
-        <div className="flex-1 bg-surface-card border border-border-default rounded-lg shadow-xs overflow-hidden">
-          <div className="flex">
-            <div className="w-1 bg-border-strong shrink-0" />
-            <div className="p-4 flex-1">
-              <div className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">전체 건수</div>
-              <div className="text-xl font-bold text-ink-primary font-mono tabular-nums tracking-tight">
-                {listData.length}<span className="text-xs text-ink-tertiary font-medium ml-1">건</span>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-title">전체 건수</div>
+          <div className="stat-value text-xl font-mono tabular-nums">
+            {listData.length}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
           </div>
         </div>
       </div>
 
       {/* Filter */}
-      <div className="bg-surface-card border border-border-default p-4 shadow-xs rounded-lg">
-        <form className="flex items-center gap-3 justify-center">
-          <span className="text-xs font-medium text-ink-muted uppercase tracking-wide">조회기간</span>
-          <input
-            name="sdate"
-            defaultValue={sdate}
-            className="border border-border-default rounded-md px-3 py-2 text-sm font-mono w-48 outline-none focus-visible:border-border-focus bg-surface-page"
-          />
-          <span className="text-ink-disabled font-medium">~</span>
-          <input
-            name="edate"
-            defaultValue={edate}
-            className="border border-border-default rounded-md px-3 py-2 text-sm font-mono w-48 outline-none focus-visible:border-border-focus bg-surface-page"
-          />
-          <input type="hidden" name="tab" value={tab} />
-          <button className="bg-btn-primary-bg text-btn-primary-text rounded-md px-5 py-2 text-sm font-semibold hover:bg-btn-primary-hover transition-colors duration-fast ml-1">
-            조회
-          </button>
-        </form>
+      <div className="card card-border bg-base-100">
+        <div className="card-body p-4">
+          <form className="flex items-center gap-3 justify-center">
+            <span className="text-xs font-medium text-base-content/50 uppercase tracking-wide">조회기간</span>
+            <input name="sdate" defaultValue={sdate} className="input input-bordered input-sm font-mono w-48" />
+            <span className="text-base-content/30 font-medium">~</span>
+            <input name="edate" defaultValue={edate} className="input input-bordered input-sm font-mono w-48" />
+            <input type="hidden" name="tab" value={tab} />
+            <button className="btn btn-primary btn-sm ml-1">조회</button>
+          </form>
+        </div>
       </div>
 
       {/* Data Table */}
-      <div className="bg-surface-card border border-border-default shadow-xs rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card card-border bg-base-100 overflow-hidden">
+        <table className="table table-zebra table-sm">
           <thead>
-            <tr className="bg-surface-muted text-xs text-ink-tertiary font-medium uppercase tracking-wide border-b border-border-default">
-              <th className="text-left px-4 py-3">일시</th>
-              <th className="text-left px-4 py-3">가맹점</th>
-              <th className="text-left px-4 py-3">{tab === "application" ? "Unique ID" : "주문 / 트랜잭션 ID"}</th>
-              <th className="text-right px-4 py-3">입금액</th>
-              <th className="text-left px-4 py-3">{tab === "application" ? "예금주" : "입금주"}</th>
-              <th className="text-center px-4 py-3">상태</th>
+            <tr className="text-xs uppercase tracking-wide">
+              <th>일시</th>
+              <th>가맹점</th>
+              <th>{tab === "application" ? "Unique ID" : "주문 / 트랜잭션 ID"}</th>
+              <th className="text-right">입금액</th>
+              <th>{tab === "application" ? "예금주" : "입금주"}</th>
+              <th className="text-center">상태</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-subtle">
+          <tbody>
             {listData.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-20 text-center">
-                  <div className="text-ink-muted">조회된 입금 데이터가 없습니다.</div>
-                  <div className="text-2xs text-ink-disabled mt-1">조회기간을 변경하여 다시 시도해 보세요.</div>
+                  <div className="text-base-content/40">조회된 입금 데이터가 없습니다.</div>
+                  <div className="text-2xs text-base-content/30 mt-1">조회기간을 변경하여 다시 시도해 보세요.</div>
                 </td>
               </tr>
             ) : (
               listData.map((row: any) => (
-                <tr key={row._UNIQUEID} className="hover:bg-surface-hover transition-colors duration-fast">
-                  <td className="px-4 py-3 font-mono text-xs text-ink-tertiary whitespace-nowrap">
+                <tr key={row._UNIQUEID}>
+                  <td className="font-mono text-xs text-base-content/50 whitespace-nowrap">
                     {row._CREATE_DATETIME || row._DATETIME}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-ink-primary">
-                    {row._AFFILIATE_ID}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                  <td className="font-semibold">{row._AFFILIATE_ID}</td>
+                  <td className="font-mono text-xs">
                     {tab === "application" ? (
-                      <span className="text-ink-muted">{row._UNIQUEID}</span>
+                      <span className="text-base-content/50">{row._UNIQUEID}</span>
                     ) : (
                       <div>
-                        <div className="text-ink-secondary font-semibold truncate max-w-[14rem]">{row._ORDER_ID}</div>
-                        <div className="text-ink-muted text-2xs mt-0.5 truncate max-w-[14rem]">{row._TR_ID}</div>
+                        <div className="font-semibold truncate max-w-[14rem]">{row._ORDER_ID}</div>
+                        <div className="text-base-content/40 text-2xs mt-0.5 truncate max-w-[14rem]">{row._TR_ID}</div>
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-bold font-mono tabular-nums text-ink-primary whitespace-nowrap">
+                  <td className="text-right font-bold font-mono tabular-nums whitespace-nowrap">
                     {Number(row._ORDERAMT || row._AMOUNT || 0).toLocaleString()}원
                   </td>
-                  <td className="px-4 py-3 font-semibold text-ink-primary">
-                    {row._ORDERNM || row._IN_BANK_USERNAME}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block font-semibold text-xs px-2.5 py-1 rounded-md ${
+                  <td className="font-semibold">{row._ORDERNM || row._IN_BANK_USERNAME}</td>
+                  <td className="text-center">
+                    <span className={`badge badge-sm ${
                       tab === "application"
-                        ? "bg-status-info-light text-status-info-strong"
+                        ? "badge-info badge-soft"
                         : row._STATE !== "0"
-                          ? "bg-status-success-light text-status-success-strong"
-                          : "bg-surface-muted text-ink-muted"
+                          ? "badge-success badge-soft"
+                          : "badge-ghost"
                     }`}>
                       {tab === "application" ? "접수완료" : row._STATE !== "0" ? "처리완료" : "대기"}
                     </span>

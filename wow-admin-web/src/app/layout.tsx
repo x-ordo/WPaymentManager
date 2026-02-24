@@ -21,51 +21,67 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="flex h-screen bg-surface-page text-ink-primary font-sans antialiased overflow-hidden">
+      <body className="bg-base-100 font-sans antialiased">
+        <div className="drawer lg:drawer-open">
+          <input id="sidebar-drawer" type="checkbox" className="drawer-toggle" />
 
-        {/* Sidebar */}
-        <aside className="w-60 bg-surface-sidebar border-r border-border-default flex flex-col shrink-0">
-          {/* Logo */}
-          <div className="h-14 flex items-center px-6 border-b border-border-default">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-xs font-bold text-ink-inverse">W</span>
+          {/* Main Content Area */}
+          <div className="drawer-content flex flex-col h-screen overflow-hidden">
+            {/* Top Navbar */}
+            <div className="navbar bg-base-100 border-b border-base-300 px-8 min-h-16 h-16 shrink-0">
+              {/* Mobile hamburger */}
+              <div className="flex-none lg:hidden">
+                <label htmlFor="sidebar-drawer" className="btn btn-ghost btn-square">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block h-6 w-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </label>
               </div>
-              <span className="text-sm font-bold tracking-tight text-ink-primary">Wow Payment</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-success" />
+                  <span className="text-sm font-medium text-base-content/40 tracking-wide">시스템 정상</span>
+                </div>
+              </div>
+              <div className="flex-none">
+                <Suspense fallback={<HeaderUserSkeleton />}>
+                  <HeaderUser />
+                </Suspense>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <div className="max-w-[1600px] mx-auto">
+                {children}
+              </div>
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-4 px-3 overflow-y-auto custom-scrollbar">
-            <div className="text-2xs font-semibold text-ink-disabled px-3 mb-2 uppercase tracking-wider">메뉴</div>
-            <SidebarNav />
-          </nav>
+          {/* Sidebar (drawer-side) */}
+          <div className="drawer-side z-40">
+            <label htmlFor="sidebar-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+            <aside className="bg-base-100 border-r border-base-300 w-64 flex flex-col h-full">
+              {/* Logo */}
+              <div className="h-16 flex items-center px-6 border-b border-base-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+                    <span className="text-sm font-bold text-primary-content">W</span>
+                  </div>
+                  <span className="text-base font-bold tracking-tight">Wow Payment</span>
+                </div>
+              </div>
 
-          {/* Sidebar Footer — Account Summary (async, streamed) */}
-          <Suspense fallback={<SidebarSummarySkeleton />}>
-            <SidebarSummary />
-          </Suspense>
-        </aside>
+              {/* Account Summary — prominent position */}
+              <Suspense fallback={<SidebarSummarySkeleton />}>
+                <SidebarSummary />
+              </Suspense>
 
-        {/* Main Content Area */}
-        <main className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Top Bar */}
-          <header className="h-14 bg-surface-card border-b border-border-default flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-status-success" />
-              <span className="text-xs font-medium text-ink-muted tracking-wide">시스템 정상</span>
-            </div>
-            <Suspense fallback={<HeaderUserSkeleton />}>
-              <HeaderUser />
-            </Suspense>
-          </header>
-
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-            <div className="max-w-[1600px] mx-auto">
-              {children}
-            </div>
+              {/* Navigation */}
+              <nav className="flex-1 py-4 px-3 overflow-y-auto custom-scrollbar">
+                <div className="text-xs font-semibold text-base-content/30 px-3 mb-2 uppercase tracking-wider">메뉴</div>
+                <SidebarNav />
+              </nav>
+            </aside>
           </div>
-        </main>
+        </div>
       </body>
     </html>
   );

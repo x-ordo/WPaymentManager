@@ -13,27 +13,24 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <div className="space-y-0.5">
+    <ul className="menu gap-1 p-0">
       {NAV_ITEMS.map((item) => {
         const isActive = item.matchExact
           ? pathname === item.href
           : pathname.startsWith(item.href);
 
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-md transition-colors duration-fast ${
-              isActive
-                ? "bg-surface-primary-light text-primary-text"
-                : "text-ink-tertiary hover:bg-surface-hover hover:text-ink-secondary"
-            }`}
-          >
-            {isActive && <span className="w-1 h-4 bg-primary rounded-full shrink-0" />}
-            {item.label}
-          </Link>
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              className={`font-semibold text-[15px] ${isActive ? "active bg-primary/10 text-primary" : ""}`}
+            >
+              {isActive && <span className="w-1 h-5 bg-primary rounded-full shrink-0" />}
+              {item.label}
+            </Link>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

@@ -1,4 +1,41 @@
 @import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "wowpay";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #FFFFFF;
+  --color-base-200: #FAFAFA;
+  --color-base-300: #F0F0F0;
+  --color-base-content: #171717;
+  --color-primary: #0F766E;
+  --color-primary-content: #FFFFFF;
+  --color-secondary: #0F172A;
+  --color-secondary-content: #FFFFFF;
+  --color-accent: #14B8A6;
+  --color-accent-content: #FFFFFF;
+  --color-neutral: #404040;
+  --color-neutral-content: #FFFFFF;
+  --color-info: #0EA5E9;
+  --color-info-content: #FFFFFF;
+  --color-success: #22C55E;
+  --color-success-content: #FFFFFF;
+  --color-warning: #F59E0B;
+  --color-warning-content: #171717;
+  --color-error: #EF4444;
+  --color-error-content: #FFFFFF;
+
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.28125rem;
+  --size-field: 0.28125rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
 
 /* ═══════════════════════════════════════════════════
    WOW Payment Manager — Design Token System

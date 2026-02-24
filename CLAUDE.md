@@ -35,7 +35,7 @@ No test framework is configured yet.
 
 ## Environment Variables
 
-Create `wow-admin-web/.env.local`:
+Create `wow-admin-web/.env`:
 ```
 LEGACY_API_BASE_URL=http://127.0.0.1:33552
 LEGACY_ADMIN_ID=master

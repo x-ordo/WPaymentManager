@@ -6,15 +6,17 @@ export async function HeaderUser() {
   const userName = balance?._IN_NAME || "Admin";
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex flex-col items-end">
-        <span className="text-sm font-bold text-ink-secondary">{userName}</span>
-        <span className="text-2xs font-medium text-ink-muted">Master</span>
-      </div>
-      <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center border border-border-default">
-        <span className="text-xs font-bold text-primary-text">
-          {userName.charAt(0)}
-        </span>
+    <div className="dropdown dropdown-end">
+      <div tabIndex={0} role="button" className="flex items-center gap-3 cursor-pointer">
+        <div className="flex flex-col items-end">
+          <span className="text-base font-bold">{userName}</span>
+          <span className="text-xs font-medium text-base-content/40">Master</span>
+        </div>
+        <div className="avatar placeholder">
+          <div className="bg-primary/10 text-primary w-10 rounded-full border border-base-300">
+            <span className="text-sm font-bold">{userName.charAt(0)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -22,12 +24,12 @@ export async function HeaderUser() {
 
 export function HeaderUserSkeleton() {
   return (
-    <div className="flex items-center gap-3 animate-pulse">
+    <div className="flex items-center gap-3">
       <div className="flex flex-col items-end gap-1">
-        <div className="h-4 w-16 bg-surface-muted rounded" />
-        <div className="h-3 w-10 bg-surface-muted rounded" />
+        <div className="skeleton h-5 w-20" />
+        <div className="skeleton h-3.5 w-12" />
       </div>
-      <div className="w-8 h-8 bg-surface-muted rounded-full" />
+      <div className="skeleton w-10 h-10 rounded-full" />
     </div>
   );
 }
