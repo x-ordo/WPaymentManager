@@ -1,0 +1,35 @@
+# .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: "npm" # Frontend dependencies
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "00:00" # 9 AM KST is 00:00 UTC
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  - package-ecosystem: "pip" # Backend dependencies
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "00:00" # 9 AM KST is 00:00 UTC
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+
+  - package-ecosystem: "pip" # AI Worker dependencies
+    directory: "/ai_worker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "00:00" # 9 AM KST is 00:00 UTC
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ai-worker"

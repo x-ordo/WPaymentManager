@@ -1,0 +1,146 @@
+/**
+ * Jest Setup for CHAGOK Frontend
+ * Configures testing environment and global mocks
+ */
+
+import '@testing-library/jest-dom';
+import { server } from './src/__tests__/mocks/server';
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'bypass' });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+// Polyfill Request and Response for middleware tests
+if (typeof Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init.method || 'GET';
+      this.headers = new Map(Object.entries(init.headers || {}));
+    }
+  };
+}
+
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.headers = new Map(Object.entries(init.headers || {}));
+    }
+  };
+}
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+}));
+
+// Mock next/link - forward all props including className
+jest.mock('next/link', () => {
+  return function MockLink({ children, href, className, ...props }) {
+    return <a href={href} className={className} {...props}>{children}</a>;
+  };
+});
+
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
+// Mock IntersectionObserver
+global.IntersectionObserver = class IntersectionObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {
+    return null;
+  }
+  unobserve() {
+    return null;
+  }
+  disconnect() {
+    return null;
+  }
+};
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+global.localStorage = localStorageMock;
+
+// Mock scrollTo
+global.scrollTo = jest.fn();
+
+// Suppress console errors during tests (optional - comment out for debugging)
+const originalError = console.error;
+const originalLog = console.log;
+beforeAll(() => {
+  console.error = (...args) => {
+    // Suppress React act() warnings in tests
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Warning: An update to')
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+
+  console.log = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].startsWith('WebSocket')
+    ) {
+      return;
+    }
+    originalLog.call(console, ...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalError;
+  console.log = originalLog;
+});

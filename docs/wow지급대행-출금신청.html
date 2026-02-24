@@ -1,0 +1,2477 @@
+<html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOW 지급대행 - 홈</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* 액션 버튼 가로 배치용 */
+        .action-inline {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        .action-inline .btn {
+            display: inline-flex;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- 메인 애플리케이션 (로그인 화면 제거, 원본 유지) -->
+    <div id="mainApp" class="main-app">
+        <!-- 사이드바 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-university"></i> WOW 지급대행</h2>
+                <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <nav class="sidebar-nav">
+                    <ul class="nav-menu">
+                        <li>
+                            <a href="#" class="nav-link" data-page="withdrawal-history">
+                                <i class="fas fa-arrow-up"></i>
+                                <span class="nav-text">출금내역</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link" data-page="deposit-history">
+                                <i class="fas fa-arrow-down"></i>
+                                <span class="nav-text">입금내역</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link" data-page="deposit-requests">
+                                <i class="fas fa-list"></i>
+                                <span class="nav-text">입금신청내역</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link" data-page="withdrawal-requests">
+                                <i class="fas fa-list"></i>
+                                <span class="nav-text">출금신청내역</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link active" data-page="new-withdrawal-request">
+                                <i class="fas fa-plus"></i>
+                                <span class="nav-text">출금신청</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- 사이드바 하단 사용자 정보 -->
+                <div class="sidebar-footer">
+                    <div class="user-info-sidebar">
+                        <div class="info-item">
+                            <span class="label">등록계좌</span>
+                            <span class="value" id="registeredAccounts">구수연</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">보유금액</span>
+                            <span class="value" id="balance">7,170원</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">사용가능일</span>
+                            <span class="value" id="availableDays">19일</span>
+                        </div>
+                        <div id="commission-info-box" style="margin-top: 15px;">
+        <div class="info-item"><span class="label">입금 %수수료</span><span class="value">0.3%</span></div>
+        <div class="info-item"><span class="label">출금 %수수료</span><span class="value">0%</span></div>
+        <div class="info-item"><span class="label">입금 수수료</span><span class="value">800원</span></div>
+        <div class="info-item"><span class="label">출금 수수료</span><span class="value">1,000원</span></div>
+    </div><button class="logout-btn" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> 로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 래퍼 -->
+        <div class="main-wrapper">
+            <!-- 상단 헤더 -->
+            <header class="app-header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle">출금신청</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">bam123</span>
+                            <span class="user-role">구수연</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 메인 컨텐츠 -->
+            <main class="main-content">
+                <!-- 출금내역 -->
+                <div id="withdrawal-history" class="page">
+                    <div class="page-header">
+                        <h2><i class="fas fa-arrow-up"></i> 출금내역</h2>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="date-filters">
+                            <div class="date-input-group">
+                                <label>시작일시:</label>
+                                <input type="datetime-local" id="withdrawalStartDate" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label>종료일시:</label>
+                                <input type="datetime-local" id="withdrawalEndDate" class="date-input">
+                            </div>
+                            <div class="quick-filters">
+                                <button class="btn btn-secondary" onclick="setTodayFilter('withdrawal')">오늘</button>
+                                <button class="btn btn-secondary" onclick="set30MinAgoFilter('withdrawal')">30분 전</button><button type="button" class="btn btn-primary" style="margin-left: 8px;">검색</button>
+                            </div>
+                            <button class="btn btn-success" onclick="exportToExcel('withdrawal')">
+                                <i class="fas fa-file-excel"></i> EXCEL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>순번</th>
+                                    <th>유니코드</th>
+                                    <th>통보일자</th>
+                                    <th>가맹점 이름</th>
+                                    <th>금액</th>
+                                    <th>주문번호</th>
+                                    <th>예금주</th>
+                                    <th>은행코드</th>
+                                    <th>계좌번호</th>
+                                    <th>전화번호</th>
+                                    <th>처리결과</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawalTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <h3>총 금액</h3>
+                                <span class="amount" id="totalWithdrawalAmount">0원</span>
+                            </div>
+                            <div class="summary-card success">
+                                <h3>정상 금액</h3>
+                                <span class="amount" id="normalWithdrawalAmount">0원</span>
+                            </div>
+                            <div class="summary-card error">
+                                <h3>오류 금액</h3>
+                                <span class="amount" id="errorWithdrawalAmount">0원</span>
+                            </div>
+                            <div class="summary-card">
+                                <h3>총 건수</h3>
+                                <span class="count" id="totalWithdrawalCount">0건</span>
+                            </div>
+                            <div class="summary-card error">
+                                <h3>오류 건수</h3>
+                                <span class="count" id="errorWithdrawalCount">0건</span>
+                            </div>
+                            <div class="summary-card success">
+                                <h3>정상 건수</h3>
+                                <span class="count" id="normalWithdrawalCount">0건</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 입금내역 -->
+                <div id="deposit-history" class="page">
+                    <div class="page-header">
+                        <h2><i class="fas fa-arrow-down"></i> 입금내역</h2>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="date-filters">
+                            <div class="date-input-group">
+                                <label>시작일시:</label>
+                                <input type="datetime-local" id="depositStartDate" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label>종료일시:</label>
+                                <input type="datetime-local" id="depositEndDate" class="date-input">
+                            </div>
+                            <div class="quick-filters">
+                                <button class="btn btn-secondary" onclick="setTodayFilter('deposit')">오늘</button>
+                                <button class="btn btn-secondary" onclick="set30MinAgoFilter('deposit')">30분 전</button><button type="button" class="btn btn-primary" style="margin-left: 8px;">검색</button>
+                            </div>
+                            <button class="btn btn-success" onclick="exportToExcel('deposit')">
+                                <i class="fas fa-file-excel"></i> EXCEL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>순번</th>
+                                    <th>유니코드</th>
+                                    <th>통보일자</th>
+                                    <th>가맹점 이름</th>
+                                    <th>서비스 아이디</th>
+                                    <th>주문 아이디</th>
+                                    <th>트렌젝션 아이디</th>
+                                    <th>상태 코드</th>
+                                    <th>상태 메시지</th>
+                                    <th>금액</th>
+                                    <th>은행코드</th>
+                                    <th>예금주</th>
+                                    <th>처리결과</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <h3>총 금액</h3>
+                                <span class="amount" id="totalDepositAmount">0원</span>
+                            </div>
+                            <div class="summary-card">
+                                <h3>총 건수</h3>
+                                <span class="count" id="totalDepositCount">0건</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 출금신청내역 -->
+                <div id="withdrawal-requests" class="page">
+                    <div class="page-header">
+                        <h2><i class="fas fa-list"></i> 출금신청내역</h2>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="date-filters">
+                            <div class="date-input-group">
+                                <label>시작일시:</label>
+                                <input type="datetime-local" id="requestStartDate" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label>종료일시:</label>
+                                <input type="datetime-local" id="requestEndDate" class="date-input">
+                            </div>
+                            <div class="quick-filters">
+                                <button class="btn btn-secondary" onclick="setTodayFilter('request')">오늘</button>
+                                <button class="btn btn-secondary" onclick="set30MinAgoFilter('request')">30분 전</button><button type="button" class="btn btn-primary" style="margin-left: 8px;">검색</button>
+                            </div>
+                            <button class="btn btn-success" onclick="exportToExcel('request')">
+                                <i class="fas fa-file-excel"></i> EXCEL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>순번</th>
+                                    <th>유니코드</th>
+                                    <th>신청일자</th>
+                                    <th>가맹점 명</th>
+                                    <th>신청금액</th>
+                                    <th>예금주</th>
+                                    <th>은행코드</th>
+                                    <th>은행명</th>
+                                    <th>계좌번호</th>
+                                    <th>상태</th>
+                                    <th>음답코드</th>
+                                    <th>응답 메시지</th>
+                                    <th>관리자</th>
+                                    <th>가맹점</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <h3>처리금액</h3>
+                                <span class="amount" id="processedAmount">0원</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 입금신청내역 -->
+                <div id="deposit-requests" class="page">
+                    <div class="page-header">
+                        <h2><i class="fas fa-list"></i> 입금신청내역</h2>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="date-filters">
+                            <div class="date-input-group">
+                                <label>시작일시:</label>
+                                <input type="datetime-local" id="depositRequestStartDate" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label>종료일시:</label>
+                                <input type="datetime-local" id="depositRequestEndDate" class="date-input">
+                            </div>
+                            <div class="quick-filters">
+                                <button class="btn btn-secondary" onclick="setTodayFilter('depositRequest')">오늘</button>
+                                <button class="btn btn-secondary" onclick="set30MinAgoFilter('depositRequest')">30분 전</button>
+                            </div>
+                            <button class="btn btn-primary" onclick="loadDepositRequests()">검색</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>순번</th>
+                                    <th>유니크ID</th>
+                                    <th>일시</th>
+                                    <th>가맹점</th>
+                                    <th>예금주</th>
+                                    <th>금액</th>
+                                    <th>은행코드</th>
+                                    <th>계좌번호</th>
+                                    <th>결과</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositRequestTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 출금신청 -->
+                <div id="new-withdrawal-request" class="page active">
+                    <div class="page-header">
+                        <h2><i class="fas fa-plus"></i> 새 출금신청</h2>
+                    </div>
+
+                    <div class="request-form-container">
+                        <div class="request-form">
+                            <div class="form-section">
+                                <h3>출금 한도 정보</h3>
+                                <div class="limit-info">
+                                    <div class="limit-item">
+                                        <span class="label">출금 최소금액:</span>
+                                        <span class="value">10,000원</span>
+                                    </div>
+                                    <div class="limit-item">
+                                        <span class="label">출금 최대금액:</span>
+                                        <span class="value">2,000,000원</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>출금신청 정보</h3>
+                                <div class="form-group">
+                                    <label for="requestAmount">신청금액 *</label>
+                                    <input type="text" id="requestAmount" inputmode="numeric" autocomplete="off" placeholder="출금할 금액을 입력하세요" required="">
+                                </div>
+                                 <div class="form-group">
+                                    <label for="phoneWithdraw">휴대폰번호 *</label>
+                                    <input type="text" id="phoneWithdraw" inputmode="numeric" pattern="\d*" autocomplete="off" placeholder="휴대폰을 입력하세요" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountHolder">예금주 *</label>
+                                    <input type="text" id="accountHolder" placeholder="예금주명을 입력하세요" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bankCode">은행코드 *</label>
+                                    <select id="bankCode" required=""><option value="">은행을 선택하세요</option><option value="001">한국은행</option><option value="002">KDB산업은행</option><option value="003">IBK기업은행</option><option value="004">KB국민은행</option><option value="005">외환은행(구 KEB)</option><option value="007">수협은행</option><option value="008">한국수출입은행</option><option value="011">NH농협은행</option><option value="012">지역 농·축협(단위농축협)</option><option value="020">우리은행</option><option value="023">SC제일은행</option><option value="027">한국씨티은행</option><option value="031">대구은행</option><option value="032">부산은행</option><option value="034">광주은행</option><option value="035">제주은행</option><option value="037">전북은행</option><option value="039">경남은행</option><option value="045">새마을금고</option><option value="048">신협</option><option value="050">저축은행(상호저축은행)</option><option value="064">산림조합중앙회</option><option value="071">우체국</option><option value="081">하나은행</option><option value="088">신한은행</option><option value="089">케이뱅크</option><option value="090">카카오뱅크</option><option value="092">토스뱅크</option><option value="209">유안타증권</option><option value="218">KB증권</option><option value="227">KTB투자증권</option><option value="238">미래에셋증권</option><option value="240">삼성증권</option><option value="243">한국투자증권</option><option value="247">NH투자증권</option><option value="256">이베스트투자증권</option><option value="261">교보증권</option><option value="262">하이투자증권</option><option value="263">현대차증권</option><option value="264">키움증권</option><option value="265">LS증권</option><option value="266">SK증권</option><option value="267">대신증권</option><option value="269">한화투자증권</option><option value="270">하나증권</option><option value="271">토스증권</option><option value="278">신한투자증권</option><option value="279">DB금융투자</option><option value="280">유진투자증권</option><option value="287">메리츠증권</option><option value="288">카카오페이증권</option><option value="290">부국증권</option><option value="291">신영증권</option><option value="292">케이프투자증권</option><option value="294">한국포스증권</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountNumber">계좌번호 *</label>
+                                    <input type="text" id="accountNumber" placeholder="계좌번호를 입력하세요" required="" inputmode="numeric" pattern="\d*" autocomplete="off">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" id="prevWithdrawalBtn" class="btn btn-secondary" onclick="openPrevWithdrawalModal()">
+                                        <i class="fas fa-history"></i> 이전출금내역
+                                    </button>
+                                    <button type="button" id="submitRequestBtn" class="btn btn-primary" onclick="submitWithdrawalRequest()">
+                                        <i class="fas fa-paper-plane"></i> 출금신청 접수하기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div> <!-- /main-wrapper -->
+    </div> <!-- /mainApp -->
+
+    <!-- 모달 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- 로그인 성공 세션 값 바인딩 & 가드 (필요 최소만) -->
+    <script>
+        // ✅ 입금신청내역 API (기본 IP는 기존 서버 IP 사용)
+        const API_DEPOSIT_REQUEST = '/api/21000';
+
+        async function loadDepositRequests() {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const conn = sessionStorage.getItem('login._CONNID') || '';
+
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('입금신청내역 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+            }
+
+            // 날짜 필드 가져오기
+            const sEl = document.getElementById('depositRequestStartDate');
+            const eEl = document.getElementById('depositRequestEndDate');
+            const sdate = toServerDT(sEl?.value);
+            const edate = toServerDT(eEl?.value);
+
+            const url = `${API_DEPOSIT_REQUEST}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(conn)}` +
+                `&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`;
+
+            showLoading('입금신청내역 불러오는 중...');
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+
+                //console.log('입금신청내역 응답:', data); // ✅ 결과 확인 로그
+
+                const code = String(data?.code || '');
+                if (code === '1') {
+                    const rows = data.data || [];
+                    renderDepositRequests(rows); // ✅ 테이블 표시
+                    //  console.log('✅ 테이블 렌더 완료:', rows.length, '건');
+                } else {
+                    const msg = {
+                        '2': '회원정보없음',
+                        '3': '정보없음',
+                        '6': '현재 시스템 점검시간 입니다',
+                        '400': '예외발생 다음에 이용해 주세요',
+                        '401': '5초후 이용해 주세요',
+                        '402': 'Connect정보 없음',
+                        '404': 'Not Found',
+                        '500': 'Database Error'
+                    } [code] || data?.message || `알 수 없는 응답(code=${code})`;
+
+                    console.warn('⚠ API 오류:', msg);
+                }
+            } catch (err) {
+                console.error('입금신청내역 조회 오류:', err);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ===== 보조 유틸 =====
+        const acctEl = document.getElementById('accountNumber');
+
+        if (acctEl && !acctEl._digitsOnly) {
+            // 모든 비숫자 제거 (입력/붙여넣기 모두 커버)
+            const onlyDigits = () => {
+                const v = acctEl.value;
+                const digits = v.replace(/\D/g, '');
+                if (v !== digits) acctEl.value = digits;
+            };
+            acctEl.addEventListener('input', onlyDigits);
+
+            // 숫자 키패드 유도(백업)
+            acctEl.setAttribute('inputmode', 'numeric');
+            acctEl.setAttribute('pattern', '\\d*');
+
+            acctEl._digitsOnly = true; // 중복 바인딩 방지
+        }
+
+        const phoneDigitsEl = document.getElementById('phoneWithdraw');
+
+        if (phoneDigitsEl && !phoneDigitsEl._digitsOnly) {
+            const onlyDigits = () => {
+                const v = phoneDigitsEl.value;
+                const digits = v.replace(/\D/g, '');
+                if (v !== digits) phoneDigitsEl.value = digits;
+            };
+            phoneDigitsEl.addEventListener('input', onlyDigits);
+
+            phoneDigitsEl.setAttribute('inputmode', 'numeric');
+            phoneDigitsEl.setAttribute('pattern', '\\d*');
+
+            phoneDigitsEl._digitsOnly = true; // prevent duplicate binding
+        }
+
+
+        async function loadDepositNotifications() {
+            // 함수 내부에서 선언해 TDZ 회피
+            const API_DEPOSIT = '/api/40000';
+
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const conn = sessionStorage.getItem('login._CONNID') || '';
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('입금내역 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+            }
+
+            const sEl = document.getElementById('depositStartDate');
+            const eEl = document.getElementById('depositEndDate');
+            const nameEl = document.getElementById('depositName'); // (있으면 사용)
+
+            const sdate = toServerDT(sEl?.value); // 기존 포맷 유지: 'T'→' '
+            const edate = toServerDT(eEl?.value);
+            const bankuser = nameEl?.value?.trim() || '';
+
+            let url = `${API_DEPOSIT}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(conn)}` +
+                `&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`;
+            // 서버가 지원하면 예금주 필터 전달(미지원이어도 무해)
+            if (bankuser) url += `&bankuser=${encodeURIComponent(bankuser)}`;
+
+            showLoading('입금내역 불러오는 중...');
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    renderDepositNotifications(data.data || []);
+                } else {
+                    renderDepositNotifications([]);
+                    const c = String(code); // 숫자/문자 혼용 대비
+                    const msg = {
+                        '2': '회원정보없음',
+                        '3': '정보없음',
+                        '6': '현재 시스템 점검시간 입니다',
+                        '400': '예외발생 다음에 이용해 주세요',
+                        '401': '5초후 이용해 주세요',
+                        '402': 'Connect정보 없음',
+                        '404': 'Not Found',
+                        '500': 'Database Error',
+                    } [c] || data?.message || `알 수 없는 응답(code=${c})`;
+
+                    if (c === '3') {
+                        // 조용히 통과 (원하면 console만 남기세요)
+                        // console.info('[정보없음] 화면 업데이트만 하고 알림은 생략');
+                        return;
+                    }
+
+                    alert(msg);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+            }
+        }
+
+
+        // 입금내역 테이블 & 요약 렌더
+        function renderDepositNotifications(rows) {
+            const tbody = document.getElementById('depositTableBody');
+            if (tbody) tbody.innerHTML = '';
+
+            let totalAmt = 0,
+                totalCnt = 0;
+            const asInt = v => Number(String(v || 0).replace(/[^\d-]/g, '')) || 0;
+
+            (rows || []).forEach((r, idx) => {
+                const money = asInt(r._AMOUNT);
+                totalAmt += money;
+                totalCnt++;
+
+                const tr = document.createElement('tr');
+                // 상태코드 성공 판단: '0000'
+                const ok = String(r._RESPONSE_CODE || '') === '0000';
+                // 처리결과: _STATE === '1' 이면 '처리', 아니면 '미처리'
+                const processed = String(r._STATE || '0') === '1';
+
+                tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${r._UNIQUEID ?? '-'}</td>
+      <td>${r._CREATE_DATETIME ?? r._CREATEDATE ?? '-'}</td>
+      <td>${r._AFFILIATE_ID ?? '-'}</td>
+      <td>${r._SERVICE_ID ?? '-'}</td>
+      <td>${r._ORDER_ID ?? '-'}</td>
+      <td>${r._TR_ID ?? '-'}</td>
+      <td>${r._RESPONSE_CODE ?? '-'}</td>
+      <td>${r._RESPONSE_MESSAGE ?? '-'}</td>
+      <td>${money.toLocaleString('ko-KR')}원</td>
+      <td>${r._IN_BANK_CODE ?? '-'}</td>
+      <td>${r._IN_BANK_USERNAME ?? '-'}</td>
+      <td>${processed ? '처리' : '미처리'}</td>
+    `;
+                // 응답코드가 성공이 아니면 빨간 배경
+                // '처리'가 아니면 빨간 배경
+                if (!processed) {
+                    tr.style.background = '#f44336';
+                    tr.style.color = '#fff';
+                }
+                tbody && tbody.appendChild(tr);
+            });
+
+            const setText = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = v;
+            };
+            setText('totalDepositAmount', totalAmt.toLocaleString('ko-KR') + '원');
+            setText('totalDepositCount', totalCnt + '건');
+        }
+
+
+        // 금액/카운트 요약 갱신 + 테이블 그리기
+        function renderWithdrawalNotifications(rows) {
+            const tbody = document.getElementById('withdrawalTableBody');
+            if (tbody) tbody.innerHTML = '';
+
+            let totalAmt = 0,
+                okAmt = 0,
+                errAmt = 0;
+            let totalCnt = 0,
+                okCnt = 0,
+                errCnt = 0;
+
+            const asInt = v => Number(String(v || 0).replace(/[^\d-]/g, '')) || 0;
+
+            (rows || []).forEach((r, idx) => {
+                const money = asInt(r._MONEY);
+                totalAmt += money;
+                totalCnt++;
+
+                const ok = String(r._RETURNCODE || '') === '0';
+                if (ok) {
+                    okAmt += money;
+                    okCnt++;
+                } else {
+                    errAmt += money;
+                    errCnt++;
+                }
+
+                if (tbody) {
+                    const tr = document.createElement('tr');
+
+                    const statusCell = ok ? '처리' : (r._RETURNMSG ?? '-');
+
+                    tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${r._UNIQUEID ?? '-'}</td>
+        <td>${r._CREATE_DATETIME ?? '-'}</td>
+        <td>${r._AFFILIATE_ID ?? '-'}</td>
+        <td>${money.toLocaleString('ko-KR')}원</td>
+        <td>${r._ORDERNUMBER ?? '-'}</td>
+        <td>${r._NAME ?? '-'}</td>
+        <td>${r._BANKCODE ?? '-'}</td>
+        <td>${r._BANKNUMBER ?? '-'}</td>
+        <td>${r._TEL ?? '-'}</td>
+        <td>${statusCell}</td>   <!-- ← 여기만 핵심 변경 -->
+      `;
+                    // (옵션) 성공이 아닌 건 강조하고 싶으면 아래 주석 해제
+                    if (!ok) {
+                        tr.style.background = '#f44336';
+                        tr.style.color = '#fff';
+                    }
+                    tbody.appendChild(tr);
+                }
+            });
+
+            // 요약 카드 채우기 (id는 기존 마크업에 맞춤)
+            const setText = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = v;
+            };
+            setText('totalWithdrawalAmount', totalAmt.toLocaleString('ko-KR') + '원');
+            setText('normalWithdrawalAmount', okAmt.toLocaleString('ko-KR') + '원');
+            setText('errorWithdrawalAmount', errAmt.toLocaleString('ko-KR') + '원');
+            setText('totalWithdrawalCount', totalCnt + '건');
+            setText('normalWithdrawalCount', okCnt + '건');
+            setText('errorWithdrawalCount', errCnt + '건');
+        }
+
+        const API_WITHDRAWAL = '/api/30000'; // 프록시 경유
+
+        async function loadWithdrawalNotifications() {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const conn = sessionStorage.getItem('login._CONNID') || '';
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('출금내역 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+            }
+
+            const sEl = document.getElementById('withdrawalStartDate');
+            const eEl = document.getElementById('withdrawalEndDate');
+            const nameEl = document.getElementById('withdrawalName'); // ← 예금주 입력(앞서 추가한 인풋)
+
+            const sdate = toServerDT(sEl?.value);
+            const edate = toServerDT(eEl?.value);
+            const bankuser = nameEl?.value?.trim() || '';
+
+            let url = `${API_WITHDRAWAL}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(conn)}` +
+                `&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`;
+            if (bankuser) url += `&bankuser=${encodeURIComponent(bankuser)}`;
+
+            showLoading('출금내역 불러오는 중...');
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    renderWithdrawalNotifications(data.data || []);
+                } else {
+                    renderWithdrawalNotifications([]);
+                    const c = String(code); // 숫자/문자 혼용 대비
+                    const msg = {
+                        '2': '회원정보없음',
+                        '3': '정보없음',
+                        '6': '현재 시스템 점검시간 입니다',
+                        '400': '예외발생 다음에 이용해 주세요',
+                        '401': '5초후 이용해 주세요',
+                        '402': 'Connect정보 없음',
+                        '404': 'Not Found',
+                        '500': 'Database Error',
+                    } [c] || data?.message || `알 수 없는 응답(code=${c})`;
+
+                    if (c === '3') {
+                        // 조용히 통과 (원하면 console만 남기세요)
+                        // console.info('[정보없음] 화면 업데이트만 하고 알림은 생략');
+                        return;
+                    }
+
+                    alert(msg);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        const API_APPROVE = '/api/51400';
+        const API_CANCEL = '/api/51600';
+
+        const __msgMapAct = {
+            '1': '성공',
+            '2': '회원정보없음',
+            '6': '현재 시스템 점검시간 입니다',
+            '400': '예외발생 다음에 이용해 주세요',
+            '401': '5초후 이용해 주세요', // ← 추가
+            '402': 'Connect정보 없음', // ← 추가 (아래 후속 처리 권장)
+            '404': 'API없음',
+            '500': 'Database Error'
+        };
+
+        async function callRequestAction(kind, uniqueId) {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const {
+                connectionid
+            } = (() => ({
+                connectionid: sessionStorage.getItem('login._CONNID') || ''
+            }))();
+
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('처리를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+            }
+
+            const base = (kind === 'approve') ? API_APPROVE : API_CANCEL;
+            const url = `${base}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(connectionid)}&uniqueid=${encodeURIComponent(uniqueId)}`;
+
+            showLoading(kind === 'approve' ? '승인 처리 중...' : '취소 처리 중...');
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    // 성공: 알림 없이 리스트 새로고침
+                    await loadWithdrawalRequests();
+                    return;
+                }
+                alert(__msgMapAct[code] || data?.message || `알 수 없는 응답(code=${code})`);
+            } catch (e) {
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function formatMoneyInput(el) {
+            if (!el) return;
+            // 커서 위치 보존
+            const start = el.selectionStart,
+                end = el.selectionEnd;
+
+            const digits = el.value.replace(/[^\d]/g, '');
+            if (!digits) {
+                el.value = '';
+                return;
+            }
+
+            el.value = Number(digits).toLocaleString();
+
+            // 커서 복원 (가능한 한)
+            try {
+                el.setSelectionRange(el.value.length, el.value.length);
+            } catch {}
+        }
+
+        function uncomma(s) {
+            return String(s || '').replace(/,/g, '');
+        }
+
+        function uncomma(s) {
+            return String(s || '').replace(/,/g, '');
+        }
+
+        // 테이블 바디 이벤트 위임
+        (function bindRequestActions() {
+            const tbody = document.getElementById('requestTableBody');
+            if (!tbody) return;
+            tbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const uid = btn.getAttribute('data-uid');
+                const act = btn.getAttribute('data-action'); // 'approve' | 'cancel'
+                const name = btn.getAttribute('data-name') || '-';
+                const amt = btn.getAttribute('data-amount') || '';
+                const prettyAmt = amt ? Number(amt).toLocaleString() : '';
+                if (!uid) return;
+                const verb = (act === 'approve') ? '승인' : '취소';
+                if (!confirm(`[${name}]에게 ${prettyAmt}원을 출금신청 ${verb} 하시겠습니까?`)) return;
+                if (act === 'approve') callRequestAction('approve', uid);
+                else if (act === 'cancel') callRequestAction('cancel', uid);
+            });
+        })();
+
+        async function bulkApproveRequests() {
+            const tbody = document.getElementById('requestTableBody');
+            if (!tbody) return;
+
+            // 현재 승인 가능한 항목의 승인 버튼 모두 수집(대기 & 가맹점 대기 조건은 렌더가 버튼으로 보장)
+            const approveBtns = [...tbody.querySelectorAll('button[data-action="approve"]')];
+            if (approveBtns.length === 0) {
+                alert('승인 처리할 내역이 없습니다.');
+                return;
+            }
+
+            const items = approveBtns.map(b => ({
+                uid: b.getAttribute('data-uid'),
+                name: b.getAttribute('data-name') || '-'
+            }));
+
+            // 요약 확인창
+            const names = items.slice(0, 5).map(x => x.name).join(', ') + (items.length > 5 ? ' 외' : '');
+            if (!confirm(`총 ${items.length}건을 일괄 승인하시겠습니까?\n예: ${names}`)) return;
+
+            // 자격 정보
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const {
+                connectionid
+            } = (() => ({
+                connectionid: sessionStorage.getItem('login._CONNID') || ''
+            }))();
+
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('처리를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+            }
+
+            showLoading('일괄 승인 처리 중...');
+
+            let ok = 0,
+                fail = 0;
+            try {
+                // 순차 처리(과도한 동시 요청 방지)
+                for (const it of items) {
+                    const url = `${API_APPROVE}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(connectionid)}&uniqueid=${encodeURIComponent(it.uid)}`;
+                    try {
+                        const resp = await fetch(url, {
+                            method: 'GET'
+                        });
+                        const data = await resp.json();
+                        if (String(data?.code || '') === '1') ok++;
+                        else fail++;
+                    } catch {
+                        fail++;
+                    }
+                }
+            } finally {
+                hideLoading();
+            }
+
+            alert(`일괄 승인 완료: 성공 ${ok}건 / 실패 ${fail}건`);
+            // 한 번만 새로고침
+            await loadWithdrawalRequests();
+        }
+
+        // 처리된 금액 합산 (STATE=1)
+        function setProcessedAmountFromRows(rows) {
+            const el = document.getElementById('processedAmount');
+            if (!el) return;
+
+            const sum = (rows || [])
+                .filter(r => String(r._STATE) === '1')
+                .reduce((acc, r) => acc + (Number(String(r._MONEY).replace(/[,]/g, '')) || 0), 0);
+
+            el.textContent = sum.toLocaleString('ko-KR') + '원';
+        }
+
+        (function addSearchButtons() {
+            // 섹션별 설정: (퀵필터 컨테이너, onClick)
+            const confs = [{
+                    root: '#withdrawal-history .filter-section .date-filters',
+                    onClick: () => window.loadWithdrawalNotifications?.()
+                },
+                {
+                    root: '#deposit-history .filter-section .date-filters',
+                    onClick: () => window.loadDepositNotifications?.()
+                },
+                {
+                    root: '#withdrawal-requests .filter-section .date-filters',
+                    onClick: () => window.loadWithdrawalRequests?.()
+                },
+            ];
+
+            confs.forEach(({
+                root,
+                onClick
+            }) => {
+                const wrap = document.querySelector(root);
+                if (!wrap) return;
+
+                // “오늘/30분 전” 버튼들이 들어있는 컨테이너
+                const quick = wrap.querySelector('.quick-filters');
+                if (!quick) return;
+
+                // 30분 전 버튼 찾기 (없으면 quick 마지막에 붙임)
+                const thirtyBtn = quick.querySelector('button:nth-child(2)') || quick.lastElementChild;
+
+                // 검색 버튼 생성
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-primary';
+                btn.textContent = '검색';
+                btn.style.marginLeft = '8px';
+                btn.addEventListener('click', onClick || (() => {}));
+
+                // 🔧 30분 전 버튼 “바로 옆”에 삽입
+                if (thirtyBtn) {
+                    thirtyBtn.insertAdjacentElement('afterend', btn);
+                } else {
+                    quick.appendChild(btn);
+                }
+
+                // 요청 섹션에만 "일괄승인" 버튼 추가
+                /*  if (root.startsWith('#withdrawal-requests')) {
+                      const bulk = document.createElement('button');
+                      bulk.type = 'button';
+                      bulk.className = 'btn btn-success';
+                      bulk.textContent = '일괄승인';
+                      bulk.style.marginLeft = '8px';
+                      bulk.addEventListener('click', () => bulkApproveRequests());
+                      btn.insertAdjacentElement('afterend', bulk);
+                  }*/
+            });
+        })();
+        // === 유틸 ===
+        const __reqAPI = '/api/51000'; // 프록시 경유
+        const __pad = n => String(n).padStart(2, '0');
+
+        function toServerDT(dtLocal) {
+            // "yyyy-MM-ddTHH:mm" -> "yyyy-MM-dd HH:mm:00"
+            if (!dtLocal) return '';
+            const d = new Date(dtLocal);
+            if (isNaN(d)) {
+                // 일부 브라우저는 그대로 들어오기도 함: 보수적으로 공백만 T로 교체
+                return dtLocal.replace('T', ' ') + (dtLocal.length === 16 ? ':00' : '');
+            }
+            return `${d.getFullYear()}-${__pad(d.getMonth()+1)}-${__pad(d.getDate())} ${__pad(d.getHours())}:${__pad(d.getMinutes())}:00`;
+        }
+
+        function moneyFmt(n) {
+            n = Number(n || 0);
+            return n.toLocaleString('ko-KR');
+        }
+
+        // === 테이블 렌더 ===
+        function renderWithdrawalRequests(rows) {
+            const tbody = document.getElementById('requestTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!rows || !rows.length) return;
+
+            const stateText = {
+                '0': '대기중',
+                '1': '처리',
+                '2': '오류',
+                '3': '취소'
+            };
+
+            rows.forEach((r, idx) => {
+                const tr = document.createElement('tr');
+
+                // 가맹점 대기 상태인지
+                const isShopWaiting = String(r._SHOP_STATE ?? '0') === '0';
+                const isWaitingState = String(r._STATE ?? '') === '0';
+
+                // 버튼 표시 조건: "가맹점이 대기 상태일 때만" 노출
+                let actionHtml = '-';
+                if (isWaitingState && isShopWaiting) {
+                    actionHtml = `
+    <div class="action-inline">
+      <button type="button" class="btn btn-primary"
+                    data-action="approve" data-uid="${r._UNIQUEID}"
+         data-name="${r._BANKUSER ?? ''}"
+                      data-amount="${(r._MONEY ?? r._AMOUNT ?? r._REQUESTMONEY ?? 0)}">승인</button>
+      <button type="button" class="btn btn-secondary"
+            data-action="cancel"  data-uid="${r._UNIQUEID}"
+         data-name="${r._BANKUSER ?? ''}"
+         data-amount="${(r._MONEY ?? r._AMOUNT ?? r._REQUESTMONEY ?? 0)}">취소</button>
+    </div>
+  `;
+                }
+
+                tr.innerHTML = `
+    <td>${idx+1}</td>
+    <td>${r._UNIQUEID ?? '-'}</td>
+    <td>${r._CREATE_DATETIME ?? r._CREATEDATE ?? '-'}</td>
+    <td>${r._AFFILIATE_ID ?? '-'}</td>
+    <td>${moneyFmt(r._MONEY)}원</td>
+    <td>${r._BANKUSER ?? '-'}</td>
+    <td>${r._BANKCODE ?? '-'}</td>
+    <td>${r._BANKNAME ?? '-'}</td>
+    <td>${r._BANKNUMBER ?? '-'}</td>
+    <td>${stateText[String(r._STATE||'')] ?? '-'}</td>
+    <td>${r._RETURNCODE ?? '-'}</td>
+    <td>${r._RETURNMSG ?? '-'}</td>
+<td>${ (['대기','가맹점승인','승인'])[Number(r._ADMIN_STATE ?? 0)] ?? '대기' }</td>
+    <td>${isShopWaiting ? '대기' : '승인'}</td>
+    <td>${actionHtml}</td>
+  `;
+
+                // ✅ 응답코드가 0이 아니면 행을 빨간 배경으로
+                if (String(r._RETURNCODE ?? '') !== '0') {
+                    tr.style.background = '#f44336';
+                    tr.style.color = '#fff';
+                }
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // === API 호출 ===
+        async function loadWithdrawalRequests() {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const conn = sessionStorage.getItem('login._CONNID') || '';
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('출금신청내역 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+                // 필요 시 저장 가능: sessionStorage.setItem('login._PASS', pass);
+            }
+
+            const sEl = document.getElementById('requestStartDate');
+            const eEl = document.getElementById('requestEndDate');
+            const sdate = toServerDT(sEl?.value);
+            const edate = toServerDT(eEl?.value);
+
+            const url = `${__reqAPI}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(conn)}` +
+                `&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`;
+
+            showLoading('출금신청내역 불러오는 중...');
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    const rows = data.data || [];
+                    renderWithdrawalRequests(rows);
+                    setProcessedAmountFromRows(rows); // ✅ rows 넘기기
+                } else {
+                    // 2: 회원정보없음, 3: 정보없음, 6: 점검
+                    renderWithdrawalRequests([]);
+                    setProcessedAmountFromRows([]); // 실패/무자료 시 0원
+                    const c = String(code); // 숫자/문자 혼용 대비
+                    const msg = {
+                        '2': '회원정보없음',
+                        '3': '정보없음',
+                        '6': '현재 시스템 점검시간 입니다',
+                        '400': '예외발생 다음에 이용해 주세요',
+                        '401': '5초후 이용해 주세요',
+                        '402': 'Connect정보 없음',
+                        '404': 'Not Found',
+                        '500': 'Database Error',
+                    } [c] || data?.message || `알 수 없는 응답(code=${c})`;
+
+                    if (c === '3') {
+                        // 조용히 통과 (원하면 console만 남기세요)
+                        // console.info('[정보없음] 화면 업데이트만 하고 알림은 생략');
+                        return;
+                    }
+
+                    alert(msg);
+
+                }
+            } catch (err) {
+                console.error(err);
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ✅ 통신 중 전체화면 로딩 표시
+        function showLoading(text = '처리중...') {
+            let el = document.getElementById('__loading__');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = '__loading__';
+                el.style.cssText = `
+      position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.35);z-index:9999;color:#fff;font-weight:700;font-size:16px
+    `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+      background:rgba(0,0,0,.6);padding:14px 18px;border-radius:10px;
+      display:flex;gap:10px;align-items:center
+    `;
+                const spinner = document.createElement('div');
+                spinner.style.cssText = `
+      width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;
+      animation:__spin 0.8s linear infinite
+    `;
+                const msg = document.createElement('span');
+                msg.id = '__loading_msg__';
+                msg.textContent = text;
+                const style = document.createElement('style');
+                style.textContent = `@keyframes __spin{to{transform:rotate(360deg)}}`;
+                box.appendChild(spinner);
+                box.appendChild(msg);
+                el.appendChild(style);
+                el.appendChild(box);
+                document.body.appendChild(el);
+            } else {
+                const msg = document.getElementById('__loading_msg__');
+                if (msg) msg.textContent = text;
+                el.style.display = 'flex';
+            }
+        }
+
+        function hideLoading() {
+            const el = document.getElementById('__loading__');
+            if (el) el.style.display = 'none';
+        }
+
+        const BANKS = [{
+                code: '001',
+                name: '한국은행'
+            }, // 일부 시스템에서 사용
+            {
+                code: '002',
+                name: 'KDB산업은행'
+            },
+            {
+                code: '003',
+                name: 'IBK기업은행'
+            },
+            {
+                code: '004',
+                name: 'KB국민은행'
+            },
+            {
+                code: '005',
+                name: '외환은행(구 KEB)'
+            }, // 역사코드, 일부 시스템 잔존
+            {
+                code: '007',
+                name: '수협은행'
+            },
+            {
+                code: '008',
+                name: '한국수출입은행'
+            },
+            {
+                code: '011',
+                name: 'NH농협은행'
+            },
+            {
+                code: '012',
+                name: '지역 농·축협(단위농축협)'
+            },
+            {
+                code: '020',
+                name: '우리은행'
+            },
+            {
+                code: '023',
+                name: 'SC제일은행'
+            },
+            {
+                code: '027',
+                name: '한국씨티은행'
+            },
+            {
+                code: '031',
+                name: '대구은행'
+            },
+            {
+                code: '032',
+                name: '부산은행'
+            },
+            {
+                code: '034',
+                name: '광주은행'
+            },
+            {
+                code: '035',
+                name: '제주은행'
+            },
+            {
+                code: '037',
+                name: '전북은행'
+            },
+            {
+                code: '039',
+                name: '경남은행'
+            },
+            {
+                code: '045',
+                name: '새마을금고'
+            },
+            {
+                code: '048',
+                name: '신협'
+            },
+            {
+                code: '050',
+                name: '저축은행(상호저축은행)'
+            },
+            {
+                code: '064',
+                name: '산림조합중앙회'
+            },
+            {
+                code: '071',
+                name: '우체국'
+            },
+            {
+                code: '081',
+                name: '하나은행'
+            }, // (구 KEB하나 포함)
+            {
+                code: '088',
+                name: '신한은행'
+            }, // 이체계/PG별 026/088 혼재
+            {
+                code: '089',
+                name: '케이뱅크'
+            },
+            {
+                code: '090',
+                name: '카카오뱅크'
+            },
+            {
+                code: '092',
+                name: '토스뱅크'
+            },
+            {
+                code: '209',
+                name: '유안타증권'
+            }, // (동양종합금융증권)
+            {
+                code: '218',
+                name: 'KB증권'
+            }, // (현대증권)
+            {
+                code: '227',
+                name: 'KTB투자증권'
+            }, // 현재는 '다올투자증권' 상호 변경
+            {
+                code: '238',
+                name: '미래에셋증권'
+            },
+            {
+                code: '240',
+                name: '삼성증권'
+            },
+            {
+                code: '243',
+                name: '한국투자증권'
+            },
+            {
+                code: '247',
+                name: 'NH투자증권'
+            },
+            {
+                code: '256',
+                name: '이베스트투자증권'
+            },
+            {
+                code: '261',
+                name: '교보증권'
+            },
+            {
+                code: '262',
+                name: '하이투자증권'
+            }, // 일부 PG는 iM증권으로 표기
+            {
+                code: '263',
+                name: '현대차증권'
+            }, // (HMC투자증권)
+            {
+                code: '264',
+                name: '키움증권'
+            },
+            {
+                code: '265',
+                name: 'LS증권'
+            }, // 일부 PG 데이터 표기(실무에선 거의 미사용)
+            {
+                code: '266',
+                name: 'SK증권'
+            },
+            {
+                code: '267',
+                name: '대신증권'
+            },
+            {
+                code: '269',
+                name: '한화투자증권'
+            },
+            {
+                code: '270',
+                name: '하나증권'
+            }, // (하나대투증권)
+            {
+                code: '271',
+                name: '토스증권'
+            },
+            {
+                code: '278',
+                name: '신한투자증권'
+            }, // (신한금융투자)
+            {
+                code: '279',
+                name: 'DB금융투자'
+            }, // (동부증권)
+            {
+                code: '280',
+                name: '유진투자증권'
+            },
+            {
+                code: '287',
+                name: '메리츠증권'
+            },
+            {
+                code: '288',
+                name: '카카오페이증권'
+            },
+            {
+                code: '290',
+                name: '부국증권'
+            },
+            {
+                code: '291',
+                name: '신영증권'
+            },
+            {
+                code: '292',
+                name: '케이프투자증권'
+            },
+            {
+                code: '294',
+                name: '한국포스증권'
+            }
+        ];
+
+        function populateBankCodes() {
+            const sel = document.getElementById('bankCode');
+            if (!sel) return;
+            sel.innerHTML = '<option value=\"\">은행을 선택하세요</option>' +
+                BANKS.map(b => `<option value=\"${b.code}\">${b.name}</option>`).join('');
+        }
+        // 페이지 진입 시 1회 실행
+        populateBankCodes();
+
+        const PREV_WITHDRAWAL_PATH = '/api/51100';
+        const PREV_WITHDRAWAL_COUNT = 30;
+
+        function openModal(kindClass) {
+            const modal = document.getElementById('modal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            if (kindClass) modal.classList.add(kindClass);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.classList.remove('prev-withdrawal-modal');
+        }
+
+        function openPrevWithdrawalModal() {
+            const holderEl = document.getElementById('accountHolder');
+            const bankuser = holderEl?.value?.trim() || '';
+            if (!bankuser) {
+                alert('예금주를 입력해주세요');
+                holderEl?.focus();
+                return;
+            }
+            openModal('prev-withdrawal-modal');
+            renderPrevWithdrawalLoading(bankuser);
+            loadPrevWithdrawalHistory(bankuser);
+        }
+
+        function renderPrevWithdrawalLoading(bankuser) {
+            const body = document.getElementById('modalBody');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'prev-withdrawal-header';
+
+            const title = document.createElement('div');
+            title.className = 'prev-withdrawal-header-title';
+            title.textContent = `이전출금내역 (${bankuser})`;
+
+            const count = document.createElement('div');
+            count.className = 'prev-withdrawal-header-count';
+            count.textContent = '조회 중...';
+
+            const loading = document.createElement('div');
+            loading.className = 'prev-withdrawal-loading';
+            loading.textContent = '불러오는 중입니다.';
+
+            header.appendChild(title);
+            header.appendChild(count);
+            body.appendChild(header);
+            body.appendChild(loading);
+        }
+
+        async function loadPrevWithdrawalHistory(bankuser) {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const connectionid = sessionStorage.getItem('login._CONNID') || '';
+
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('이전출금내역 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+                sessionStorage.setItem('login._PASS', pass);
+            }
+
+            const url = `${PREV_WITHDRAWAL_PATH}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}` +
+                `&bankuser=${encodeURIComponent(bankuser)}&count=${encodeURIComponent(PREV_WITHDRAWAL_COUNT)}` +
+                `&connectionid=${encodeURIComponent(connectionid)}`;
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    renderPrevWithdrawalList(data.data || [], bankuser);
+                    return;
+                }
+                if (code === '3') {
+                    renderPrevWithdrawalList([], bankuser);
+                    return;
+                }
+
+                const msg = {
+                    '2': '회원정보없음',
+                    '6': '현재 시스템 점검시간 입니다',
+                    '400': '예외발생 다음에 이용해 주세요',
+                    '401': '5초후 이용해 주세요',
+                    '402': 'Connect정보 없음',
+                    '404': 'Not Found',
+                    '500': 'Database Error'
+                } [code] || data?.message || `알 수 없는 응답(code=${code})`;
+
+                renderPrevWithdrawalError(msg, bankuser);
+            } catch (err) {
+                console.error(err);
+                renderPrevWithdrawalError('서버 통신 중 오류가 발생했습니다', bankuser);
+            }
+        }
+
+        function renderPrevWithdrawalError(message, bankuser) {
+            const body = document.getElementById('modalBody');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'prev-withdrawal-header';
+
+            const title = document.createElement('div');
+            title.className = 'prev-withdrawal-header-title';
+            title.textContent = `이전출금내역 (${bankuser})`;
+
+            const count = document.createElement('div');
+            count.className = 'prev-withdrawal-header-count';
+            count.textContent = '조회 실패';
+
+            const empty = document.createElement('div');
+            empty.className = 'prev-withdrawal-empty';
+            empty.textContent = message || '내역을 불러오지 못했습니다.';
+
+            header.appendChild(title);
+            header.appendChild(count);
+            body.appendChild(header);
+            body.appendChild(empty);
+        }
+
+        function renderPrevWithdrawalList(items, bankuser) {
+            const rows = Array.isArray(items) ? items : [];
+            const body = document.getElementById('modalBody');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'prev-withdrawal-header';
+
+            const title = document.createElement('div');
+            title.className = 'prev-withdrawal-header-title';
+            title.textContent = `이전출금내역 (${bankuser})`;
+
+            const count = document.createElement('div');
+            count.className = 'prev-withdrawal-header-count';
+            count.textContent = `총 ${rows.length}건`;
+
+            const list = document.createElement('div');
+            list.className = 'prev-withdrawal-list';
+
+            if (!rows.length) {
+                const empty = document.createElement('div');
+                empty.className = 'prev-withdrawal-empty';
+                empty.textContent = '내역이 없습니다.';
+                list.appendChild(empty);
+            } else {
+                rows.forEach((item) => {
+                    list.appendChild(buildPrevWithdrawalItem(item));
+                });
+            }
+
+            header.appendChild(title);
+            header.appendChild(count);
+            body.appendChild(header);
+            body.appendChild(list);
+        }
+
+        function buildPrevWithdrawalItem(item) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'prev-withdrawal-item';
+            btn.addEventListener('click', () => applyPrevWithdrawal(item));
+
+            const row = document.createElement('div');
+            row.className = 'prev-withdrawal-item-row';
+
+            const name = document.createElement('div');
+            name.className = 'prev-withdrawal-item-title';
+            name.textContent = item?._BANKUSER || '-';
+
+            const amount = document.createElement('div');
+            amount.className = 'prev-withdrawal-item-amount';
+            amount.textContent = `${formatPrevMoney(item?._MONEY)}원`;
+
+            row.appendChild(name);
+            row.appendChild(amount);
+
+            const meta = document.createElement('div');
+            meta.className = 'prev-withdrawal-item-meta';
+
+            const bank = document.createElement('span');
+            const bankName = item?._BANKNAME || '';
+            const bankCode = item?._BANKCODE || '';
+            bank.textContent = bankName ?
+                `${bankName}${bankCode ? ' (' + bankCode + ')' : ''}` :
+                (bankCode || '-');
+
+            const account = document.createElement('span');
+            account.textContent = item?._BANKNUMBER || '-';
+
+            meta.appendChild(bank);
+            meta.appendChild(account);
+
+            const sub = document.createElement('div');
+            sub.className = 'prev-withdrawal-item-sub';
+
+            const date = document.createElement('span');
+            date.textContent = item?._CREATEDATE || '-';
+
+            const phone = document.createElement('span');
+            phone.textContent = item?._PHONE || '-';
+
+            sub.appendChild(date);
+            sub.appendChild(phone);
+
+            btn.appendChild(row);
+            btn.appendChild(meta);
+            btn.appendChild(sub);
+
+            return btn;
+        }
+
+        function formatPrevMoney(value) {
+            const num = Number(String(value || '0').replace(/,/g, ''));
+            if (!Number.isFinite(num)) return '0';
+            return num.toLocaleString('ko-KR');
+        }
+
+        function applyPrevWithdrawal(item) {
+            if (!item) return;
+
+            const amountEl = document.getElementById('requestAmount');
+            const holderEl = document.getElementById('accountHolder');
+            const bankSel = document.getElementById('bankCode');
+            const acctEl = document.getElementById('accountNumber');
+            const phoneEl = document.getElementById('phoneWithdraw');
+
+            if (holderEl) holderEl.value = item._BANKUSER || '';
+            if (bankSel) {
+                const code = item._BANKCODE || '';
+                if (code) {
+                    bankSel.value = code;
+                    if (bankSel.value !== code) {
+                        const opt = document.createElement('option');
+                        opt.value = code;
+                        opt.textContent = item._BANKNAME || code;
+                        bankSel.appendChild(opt);
+                        bankSel.value = code;
+                    }
+                }
+            }
+            if (acctEl) acctEl.value = item._BANKNUMBER || '';
+            if (phoneEl) phoneEl.value = item._PHONE || '';
+            if (amountEl) {
+                amountEl.value = item._MONEY || '';
+                if (typeof formatMoneyInput === 'function') {
+                    formatMoneyInput(amountEl);
+                }
+            }
+
+            closeModal();
+        }
+
+        (function bindModalCloseEvents() {
+            const modal = document.getElementById('modal');
+            if (!modal) return;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        })();
+
+        // ✅ 프록시 경유 API 경로
+        const APPLY_PATH = '/api/50000';
+        const KYC_CHECK_PATH = '/coocon/withdraw-kyc-check';
+
+        // 금액 검증(폼에 표기된 최소/최대 기준)
+        function validateAmount(n) {
+            if (!Number.isFinite(n) || n <= 0) return '금액을 올바르게 입력하세요.';
+            return '';
+        }
+
+        function bindRequestAmountInput() {
+            const el = document.getElementById('requestAmount');
+            if (!el || el._fmtBound) return;
+            el.addEventListener('input', () => formatMoneyInput(el));
+            el.addEventListener('blur', () => formatMoneyInput(el));
+            el._fmtBound = true;
+            // 초기값 있으면 한 번 정리
+            formatMoneyInput(el);
+        }
+
+        // 👉 이미 버튼에 onclick="submitWithdrawalRequest()"가 달려 있으니 이 함수만 추가하면 작동합니다.
+        async function submitWithdrawalRequest() {
+            const amountEl = document.getElementById('requestAmount');
+            const holderEl = document.getElementById('accountHolder');
+            const bankSel = document.getElementById('bankCode');
+            const acctEl = document.getElementById('accountNumber');
+            const phoneEl = document.getElementById('phoneWithdraw');
+
+            // ▶ 버튼 핸들(중복 클릭 방지)
+            const submitBtn = document.getElementById('submitRequestBtn');
+            if (submitBtn?.disabled) return;
+
+            const money = amountEl ? Number(uncomma(amountEl.value)) : 0;
+            const bankuser = (holderEl?.value || '').trim();
+            const bankcode = bankSel?.value || '';
+            const bankname = bankSel?.selectedOptions?. [0]?.textContent?.trim() || '';
+            const banknumber = (acctEl?.value || '').trim();
+            const phone = (phoneEl?.value || '').trim();
+
+            // 필수값 검증
+            const amtErr = validateAmount(money);
+            if (amtErr) return alert(amtErr);
+            if (!bankuser) return alert('예금주를 입력해 주세요');
+            if (!bankcode) return alert('은행코드를 선택해 주세요');
+            if (!banknumber) return alert('계좌번호를 입력해 주세요');
+            if (!phone) {
+                alert('휴대폰번호를 입력해 주세요');
+                phoneEl?.focus();
+                return;
+            }
+
+            // 👉 숫자만 남겨 길이 체크 (하이픈/공백 허용 입력 대비)
+            const banknumberDigits = banknumber.replace(/\D+/g, '');
+            if (banknumberDigits.length < 8) {
+                alert('계좌번호는 숫자 8자리 이상 입력해 주세요');
+                acctEl?.focus();
+                return;
+            }
+
+            // 자격 정보(id/pass)
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const connectionid = sessionStorage.getItem('login._CONNID') || '';
+            if (!id) {
+                alert('로그인이 필요합니다.');
+                location.replace('index.html');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                id,
+                pass,
+                connectionid,
+                money: String(money),
+                bankuser,
+                bankcode,
+                bankname,
+                banknumber,
+                phone
+            });
+            const url = `${APPLY_PATH}?${params.toString()}`;
+
+            // 로딩 표시
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.dataset.prevHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 접수 중...';
+            }
+            showLoading('출금신청 접수 중...');
+
+            try {
+                const kycParams = new URLSearchParams({
+                    phone,
+                    bankuser,
+                    bankcode,
+                    banknumber
+                });
+                const kycUrl = `${KYC_CHECK_PATH}?${kycParams.toString()}`;
+                const kycResp = await fetch(kycUrl, {
+                    method: 'GET'
+                });
+                let kycData = null;
+                try {
+                    kycData = await kycResp.json();
+                } catch (_) {
+                    kycData = null;
+                }
+                if (!kycResp.ok || kycData?.success === false) {
+                    alert(kycData?.message || 'KYC인증 데이터가 없습니다');
+                    return;
+                }
+
+                const resp = await fetch(url, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                const msgMap = {
+                    '1': '성공',
+                    '2': '회원정보없음',
+                    '3': '1회 출금 최대 한도를 초과 하였습니다',
+                    '4': '예금주를 입력해 주세요',
+                    '5': '은행코드 선택 오류 입니다',
+                    '6': '현재 시스템 점검시간 입니다',
+                    '7': '계좌번호를 입력해 주세요',
+                    '8': '1회 출금 최소 한도를 충족하지 못하였습니다',
+                    '9': '동일금액 출금신청은 30초후 해주세요',
+                    '400': '예외발생 다음에 이용해 주세요',
+                    '401': '5초후 이용해 주세요',
+                    '402': 'Connect정보 없음',
+                    '404': 'Not Found',
+                    '500': 'Database Error'
+                };
+
+                // 필요한 곳에 %s 같은 자리표시자를 써도 됩니다.
+                // 예: msgMap['3'] = '최대 한도 초과 (code=%s)';
+
+                if (code === '1') {
+
+                    alert('출금신청을 완료하였습니다.');
+                    // 폼 초기화
+                    if (amountEl) amountEl.value = '';
+                    if (holderEl) holderEl.value = '';
+                    if (bankSel) bankSel.value = '';
+                    if (acctEl) acctEl.value = '';
+                    if (phoneEl) phoneEl.value = '';
+
+                    // 화면 이동 (출금신청내역)
+                    /* if (typeof showPage === 'function') {
+                         showPage('withdrawal-requests');
+                     }
+                     // 라우터가 해시를 듣는 구조도 지원
+                     if (location.hash !== '#withdrawal-requests') {
+                         location.hash = '#withdrawal-requests';
+                     }
+                     try {
+                         window.dispatchEvent(new HashChangeEvent('hashchange'));
+                     } catch {}*/
+
+                    // 로딩 종료 후 종료
+                    hideLoading();
+                    return;
+                }
+
+                // 실패 코드만 메시지 출력
+                const msg = sprintf(
+                    msgMap[code] || data?.message || '알 수 없는 응답(code=%s)',
+                    code
+                );
+                alert(msg);
+            } catch (e) {
+                console.log(e);
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = submitBtn.dataset.prevHtml || '<i class="fas fa-paper-plane"></i> 출금신청 접수하기';
+                    delete submitBtn.dataset.prevHtml;
+                }
+            }
+        }
+
+        // --- 추가: 아주 간단한 sprintf ---
+        function sprintf(fmt, ...args) {
+            let i = 0;
+            return String(fmt).replace(/%[sd]/g, m => {
+                const v = args[i++];
+                return (m === '%d') ? Number(v) : String(v);
+            });
+        }
+
+        function renderDepositRequests(rows = []) {
+            const tbody = document.getElementById('depositRequestTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!rows.length) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="9" style="text-align:center;">데이터가 없습니다.</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            rows.forEach((r, idx) => {
+                const tr = document.createElement('tr');
+
+                // 정상 여부 판단 (결과코드 0000 이면 성공)
+                const ok = String(r._RESULTCODE || '') == '0000';
+                const money = Number(r._ORDERAMT || 0);
+
+                tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${r._UNIQUEID || '-'}</td>
+            <td>${r._DATETIME || '-'}</td>
+            <td>${r._AFFILIATE_ID || '-'}</td>
+            <td>${r._ORDERNM || '-'}</td>
+            <td>${money.toLocaleString('ko-KR')}원</td>
+            <td>${r._ORDERBANKCD || r._BANKCODE || '-'}</td>
+            <td>${r._ORDERACC || '-'}</td>
+            <td>${ok ? '접수완료' : '대기'}</td>
+        `;
+
+                if (!ok) {
+                    // tr.style.background = '#f44336';
+                    //  tr.style.color = '#fff';
+                } else {
+                    tr.style.background = '#1a381a';
+                    tr.style.color = '#c8f7c5';
+                }
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        (function() {
+            // ===== 공통 유틸 =====
+            const $$ = (sel, root = document) => root.querySelector(sel);
+
+            // datetime-local 포맷: YYYY-MM-DDTHH:mm
+            function toLocalInput(dt) {
+                const pad = (n) => String(n).padStart(2, '0');
+                const y = dt.getFullYear();
+                const m = pad(dt.getMonth() + 1);
+                const d = pad(dt.getDate());
+                const hh = pad(dt.getHours());
+                const mm = pad(dt.getMinutes());
+                return `${y}-${m}-${d}T${hh}:${mm}`;
+            }
+
+            // type별 input id 매핑
+            const map = {
+                withdrawal: {
+                    s: '#withdrawalStartDate',
+                    e: '#withdrawalEndDate',
+                    table: '#withdrawal-history .data-table'
+                },
+                deposit: {
+                    s: '#depositStartDate',
+                    e: '#depositEndDate',
+                    table: '#deposit-history .data-table'
+                },
+                request: {
+                    s: '#requestStartDate',
+                    e: '#requestEndDate',
+                    table: '#withdrawal-requests .data-table'
+                },
+                depositRequest: {
+                    s: '#depositRequestStartDate',
+                    e: '#depositRequestEndDate',
+                    table: '#deposit-requests .data-table'
+                }
+            };
+
+            function todayAt115959() {
+                const d = new Date();
+                d.setHours(23, 59, 59, 0); // 오늘 11:59:59
+                return d;
+            }
+
+            // ===== 1) 시작/종료 기본값: 오늘 00:00 ~ 현재시각 =====
+            function setDefaultDates() {
+                const now = new Date();
+                const start = new Date();
+                const end = todayAt115959();
+
+                start.setHours(0, 0, 0, 0);
+
+                Object.values(map).forEach(({
+                    s,
+                    e
+                }) => {
+                    const sEl = $$(s),
+                        eEl = $$(e);
+                    if (sEl) sEl.value = toLocalInput(start);
+                    if (eEl) eEl.value = toLocalInput(end);
+                });
+            }
+
+            // ===== 2) 빠른필터 버튼 =====
+            // 오늘: 해당 섹션의 시작=오늘00:00, 종료=현재
+            window.setTodayFilter = function(type) {
+                const conf = map[type];
+                if (!conf) return;
+                const now = new Date();
+                const end = todayAt115959();
+                const start = new Date();
+                start.setHours(0, 0, 0, 0);
+                const sEl = $$(conf.s),
+                    eEl = $$(conf.e);
+                if (sEl) sEl.value = toLocalInput(start);
+                if (eEl) eEl.value = toLocalInput(end);
+            };
+
+            // 30분 전: 시작=현재-30분, 종료=현재
+            window.set30MinAgoFilter = function(type) {
+                const conf = map[type];
+                if (!conf) return;
+                const now = new Date();
+                const start = new Date(now.getTime() - 30 * 60 * 1000);
+                const sEl = $$(conf.s),
+                    eEl = $$(conf.e);
+                if (sEl) sEl.value = toLocalInput(start);
+                if (eEl) eEl.value = toLocalInput(now);
+            };
+
+            // ===== 3) 표 엑셀(CSV) 내보내기 =====
+            // 현재 화면의 테이블(<table class="data-table">)을 CSV로 다운로드
+            window.exportToExcel = function(type) {
+                const sel = {
+                    withdrawal: '#withdrawal-history .data-table',
+                    deposit: '#deposit-history .data-table',
+                    request: '#withdrawal-requests .data-table'
+                } [type];
+                const table = document.querySelector(sel);
+                if (!table) {
+                    alert('테이블을 찾을 수 없습니다.');
+                    return;
+                }
+
+                // 테이블 HTML 추출 (+ 최소한의 테이블 스타일 유지)
+                const tableHtml = table.outerHTML
+                    .replace(/<tbody[^>]*>/i, '<tbody>') // 안전 처리
+                    .replace(/<thead[^>]*>/i, '<thead>');
+
+                // Excel이 읽을 수 있는 HTML 워크북 포맷
+                const html =
+                    `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  table { border-collapse: collapse; }
+  th, td { border:1px solid #ccc; padding:4px 6px; white-space:nowrap; }
+</style>
+</head><body>
+  ${tableHtml}
+</body></html>`;
+
+                const blob = new Blob([html], {
+                    type: 'application/vnd.ms-excel;charset=utf-8;'
+                });
+
+                // 파일명
+                const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                const nameMap = {
+                    withdrawal: 'withdrawal',
+                    deposit: 'deposit',
+                    request: 'withdrawal_requests'
+                };
+                const filename = `${nameMap[type]||type}_${ymd}.xls`;
+
+                // 다운로드
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    URL.revokeObjectURL(a.href);
+                    a.remove();
+                }, 0);
+            };
+
+            // 초기 세팅
+            setDefaultDates();
+        })();
+
+        (function() {
+            // ===== 세션 가드 =====
+            const IN_NAME = sessionStorage.getItem('login._IN_NAME');
+            const ID = sessionStorage.getItem('login._ID'); // 로그인 시 저장 필요
+            const MONEY = sessionStorage.getItem('login._MONEY');
+            const APRO = sessionStorage.getItem('login._APROVALUE');
+
+            if (!ID) {
+                // 로그인 정보 없으면 다시 로그인 페이지로
+                location.replace('index.html');
+                return;
+            }
+
+            // ===== 1) 우상단 표시: 아이디 / IN_NAME =====
+            function bindHeaderFromSession() {
+                const nameEl = document.querySelector('.user-name');
+                const roleEl = document.querySelector('.user-role');
+                if (nameEl) nameEl.textContent = ID; // 아이디
+                if (roleEl) roleEl.textContent = IN_NAME; // 입금자이름(IN_NAME)
+            }
+
+            // ===== 4) 사이드바 하단 정보: 등록계좌=IN_NAME, 보유금액, 사용가능일 =====
+            function bindSidebarInfo() {
+                const regEl = document.getElementById('registeredAccounts');
+                const balEl = document.getElementById('balance');
+                const dayEl = document.getElementById('availableDays');
+
+                if (regEl) regEl.textContent = IN_NAME; // 등록계좌(임시) → IN_NAME 으로 표시
+                if (balEl) balEl.textContent = Number(MONEY || 0).toLocaleString('ko-KR') + '원';
+                if (dayEl) dayEl.textContent = (APRO || '-') + (/\d$/.test(APRO || '') ? '일' : '');
+            }
+
+            // ===== 2) 왼쪽 메뉴로 화면 이동 (페이지 전환) =====
+            function showPage(pageId) {
+                // 페이지 영역 전환
+                document.querySelectorAll('.page').forEach(p => {
+                    p.classList.toggle('active', p.id === pageId);
+                });
+                // 메뉴 활성 표시
+                document.querySelectorAll('.nav-link').forEach(a => {
+                    a.classList.toggle('active', a.dataset.page === pageId);
+                });
+                // 헤더 타이틀 변경
+                const titleMap = {
+                    'withdrawal-history': '출금내역',
+                    'deposit-history': '입금내역',
+                    'deposit-requests': '입금신청내역',
+                    'withdrawal-requests': '출금신청내역',
+                    'new-withdrawal-request': '출금신청'
+                };
+                const h = document.getElementById('pageTitle');
+                if (h && titleMap[pageId]) h.textContent = titleMap[pageId];
+
+                // 해시 동기화
+                if (location.hash.replace('#', '') !== pageId) {
+                    history.pushState(null, '', '#' + pageId);
+                }
+            }
+
+            function handleNavigation(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                if (page) showPage(page);
+            }
+
+            function initNav() {
+                document.querySelectorAll('.nav-link').forEach(a => {
+                    a.addEventListener('click', handleNavigation);
+                });
+                // 최초 진입시 해시 우선, 없으면 출금내역
+                const initial = (location.hash || '').replace('#', '') || 'withdrawal-history';
+                showPage(initial);
+                // 뒤로가기/앞으로가기 대응
+                window.addEventListener('hashchange', () => {
+                    const pid = (location.hash || '').replace('#', '') || 'withdrawal-history';
+                    showPage(pid);
+                });
+            }
+
+            // ===== 3) 로그아웃 (세션 초기화) =====
+            function logout() {
+                try {
+                    sessionStorage.removeItem('login._IN_NAME');
+                    sessionStorage.removeItem('login._MONEY');
+                    sessionStorage.removeItem('login._CLASS');
+                    sessionStorage.removeItem('login._APROVALUE');
+                    sessionStorage.removeItem('login._ID');
+                    sessionStorage.clear();
+                } catch (e) {}
+                location.replace('index.html');
+            }
+            // 사이드바 하단 버튼에 연결 (클래스/구조는 원본 그대로 사용)
+            const logoutBtn = document.querySelector('.logout-btn');
+            if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+            // ===== 초기 바인딩 실행 =====
+            bindHeaderFromSession();
+            bindSidebarInfo();
+            initNav();
+        })();
+
+        /** 전역 한도(기본값은 현재 화면에 적힌 값과 동일하게 시작) */
+        window.__limitMin = 0;
+        window.__limitMax = 0;
+
+        /** 숫자 -> 1,234 형식 */
+        const __fmt = n => Number(n || 0).toLocaleString('ko-KR');
+
+        /** "출금신청" 페이지의 한도 텍스트를 업데이트 */
+        function updateLimitText(minVal, maxVal) {
+            const root = document.getElementById('new-withdrawal-request');
+            if (!root) return;
+            // 라벨 텍스트로 요소 탐색 (마크업은 그대로 두고 값만 교체)
+            const items = root.querySelectorAll('.limit-item');
+            items.forEach(it => {
+                const label = it.querySelector('.label')?.textContent?.trim() || '';
+                const valEl = it.querySelector('.value');
+                if (!valEl) return;
+                if (label.includes('최소')) valEl.textContent = __fmt(minVal) + '원';
+                if (label.includes('최대')) valEl.textContent = __fmt(maxVal) + '원';
+            });
+        }
+
+        /** /api/90100 호출하여 한도 갱신 */
+        async function loadWithdrawalLimits() {
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const connectionid = sessionStorage.getItem('login._CONNID') || '';
+
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('한도 조회를 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+                sessionStorage.setItem('login._PASS', pass);
+            }
+
+            const API = `/api/90100?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(connectionid)}`;
+
+            showLoading('출금 한도 불러오는 중...');
+            try {
+                const resp = await fetch(API, {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                const code = String(data?.code || '');
+
+                if (code === '1') {
+                    const minV = Number(data._MINSENDMONEY || 0);
+                    const maxV = Number(data._MAXSENDMONEY || 0);
+                    if (minV > 0) window.__limitMin = minV;
+                    if (maxV > 0) window.__limitMax = maxV;
+                    updateLimitText(window.__limitMin, window.__limitMax);
+                    return;
+                }
+
+                const msg = {
+                    '6': '현재 시스템 점검시간 입니다',
+                    '400': '예외발생 다음에 이용해 주세요',
+                    '401': '5초후 이용해 주세요',
+                    '402': 'Connect정보 없음',
+                    '404': 'Not Found',
+                    '500': 'Database Error'
+                } [code] || data?.message || `알 수 없는 응답(code=${code})`;
+                console.warn('[90100]', msg);
+            } catch (e) {
+                console.error(e);
+                alert('서버 통신 중 오류가 발생했습니다');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function refreshUserSummary() {
+            const API = '/api/90000';
+            const id = sessionStorage.getItem('login._ID');
+            let pass = sessionStorage.getItem('login._PASS') || '';
+            const connectionid = sessionStorage.getItem('login._CONNID') || '';
+            if (!id) {
+                location.replace('index.html');
+                return;
+            }
+            if (!pass) {
+                pass = prompt('정보 갱신을 위해 비밀번호를 입력하세요');
+                if (!pass) return;
+                // 필요 시 저장 가능: sessionStorage.setItem('login._PASS', pass);
+            }
+
+            const url = `${API}?id=${encodeURIComponent(id)}&pass=${encodeURIComponent(pass)}&connectionid=${encodeURIComponent(connectionid)}`;
+            showLoading('정보 갱신 중...');
+            try {
+                const r = await fetch(url, {
+                    method: 'GET'
+                });
+                const d = await r.json();
+                const code = String(d?.code || '');
+
+                if (code === '1') {
+                    // 세션 업데이트
+                    const money = d._MONEY || '0';
+                    const apro = d._APROVALUE || '';
+                    sessionStorage.setItem('login._MONEY', money);
+                    sessionStorage.setItem('login._APROVALUE', apro);
+
+                    // === ★ 여기서 수수료 4종도 저장한다 ★ ===
+                    sessionStorage.setItem('login._COMM_PERIN', d._COMMISION_PERIN || '0');
+                    sessionStorage.setItem('login._COMM_PEROUT', d._COMMISION_PEROUT || '0');
+                    sessionStorage.setItem('login._COMM_IN', d._COMMISION_IN || '0');
+                    sessionStorage.setItem('login._COMM_OUT', d._COMMISION_OUT || '0');
+
+                    renderCommissionInfo();
+
+                    // 사이드바 바인딩
+                    const balEl = document.getElementById('balance');
+                    const dayEl = document.getElementById('availableDays');
+                    if (balEl) balEl.textContent = Number(money).toLocaleString('ko-KR') + '원';
+                    if (dayEl) dayEl.textContent = apro + (/\d$/.test(apro) ? '일' : '');
+                } else {
+                    const map = {
+                        '2': '사용 기간이 만료 되었습니다',
+                        '3': '회원정보없음',
+                        '5': '사용 불가처리 상태 입니다',
+                        '6': '현재 시스템 점검시간 입니다',
+                        '400': '예외발생 다음에 이용해 주세요',
+                        '401': '5초후 이용해 주세요',
+                        '402': 'Connect정보 없음',
+                        '404': 'Not Found',
+                        '500': 'Database Error'
+                    };
+                    alert(d?.message || `알 수 없는 응답(code=${code})`);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderCommissionInfo() {
+            const cls = Number(sessionStorage.getItem('login._CLASS') || 100);
+            if (cls !== 40 && cls !== 60 && cls != 0) return; // 40=지사, 60=에이전시, 0=매장
+
+            const perIn = sessionStorage.getItem('login._COMM_PERIN');
+            const perOut = sessionStorage.getItem('login._COMM_PEROUT');
+            const feeIn = sessionStorage.getItem('login._COMM_IN');
+            const feeOut = sessionStorage.getItem('login._COMM_OUT');
+
+            const wrapper = document.querySelector('.user-info-sidebar');
+            if (!wrapper) return;
+
+            // 중복 방지
+            if (document.getElementById('commission-info-box')) return;
+
+            const box = document.createElement('div');
+            box.id = 'commission-info-box';
+            box.style.marginTop = '15px';
+
+            box.innerHTML = `
+        <div class="info-item"><span class="label">입금 %수수료</span><span class="value">${perIn}%</span></div>
+        <div class="info-item"><span class="label">출금 %수수료</span><span class="value">${perOut}%</span></div>
+        <div class="info-item"><span class="label">입금 수수료</span><span class="value">${Number(feeIn).toLocaleString()}원</span></div>
+        <div class="info-item"><span class="label">출금 수수료</span><span class="value">${Number(feeOut).toLocaleString()}원</span></div>
+    `;
+
+            // 🚀 핵심: 로그아웃 버튼 위에 삽입
+            const logoutBtn = wrapper.querySelector(".logout-btn");
+
+            if (logoutBtn) {
+                wrapper.insertBefore(box, logoutBtn);
+            } else {
+                // fallback — 혹시 로그아웃 버튼을 못 찾으면 그냥 append
+                wrapper.appendChild(box);
+            }
+        }
+
+        // ▼ 좌측 메뉴 전환 시 해당 페이지 데이터 자동 갱신
+        (function wireAutoRefresh() {
+            // 1) showPage 래핑: 화면 전환 후 페이지별 로더 호출
+            const _showPage = window.showPage || function() {};
+            window.showPage = function(pid) {
+                _showPage(pid);
+                refreshUserSummary(); // ✅ 최초 진입 시에도 한번 갱신
+                if (pid === 'withdrawal-history' && typeof window.loadWithdrawalNotifications === 'function') {
+                    window.loadWithdrawalNotifications();
+                }
+                if (pid === 'withdrawal-requests' && typeof window.loadWithdrawalRequests === 'function') {
+                    window.loadWithdrawalRequests();
+                }
+                if (pid === 'deposit-history' && typeof window.loadDepositNotifications === 'function') {
+                    window.loadDepositNotifications();
+                }
+                if (pid === 'new-withdrawal-request' && typeof window.loadWithdrawalLimits === 'function') {
+                    window.loadWithdrawalLimits(); // ✅ 출금신청 메뉴 들어올 때마다 최신 한도 반영
+                    bindRequestAmountInput(); // ← 여기 추가: 금액 입력 콤마 바인딩
+                }
+                if (pid === 'deposit-requests' && typeof window.loadDepositRequests === 'function') {
+                    window.loadDepositRequests();
+                }
+            };
+
+            // 2) 좌측 메뉴(.nav-link) 클릭 시 showPage 호출 보장
+            document.querySelectorAll('.nav-link').forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pid = a.dataset.page;
+                    if (pid) showPage(pid);
+                });
+            });
+
+            // 3) 주소 해시 변경으로 이동한 경우도 갱신
+            window.addEventListener('hashchange', () => {
+                const pid = (location.hash || '').replace('#', '');
+                if (pid) showPage(pid);
+            });
+
+            // 4) 첫 진입이 해당 페이지라면 1회 갱신
+            const initial = (location.hash || '').replace('#', '');
+            refreshUserSummary(); // ✅ 최초 진입 시에도 한번 갱신
+            if (initial === 'withdrawal-history' && typeof window.loadWithdrawalNotifications === 'function') {
+                window.loadWithdrawalNotifications();
+            }
+            if (initial === 'withdrawal-requests' && typeof window.loadWithdrawalRequests === 'function') {
+                window.loadWithdrawalRequests();
+            }
+            if (initial === 'deposit-history' && typeof window.loadDepositNotifications === 'function') {
+                window.loadDepositNotifications();
+            }
+            if (initial === 'new-withdrawal-request' && typeof window.loadWithdrawalLimits === 'function') {
+                window.loadWithdrawalLimits();
+                bindRequestAmountInput(); // ← 여기 추가: 금액 입력 콤마 바인딩
+            }
+        })();
+
+    </script><div id="__loading__" style="position: fixed; inset: 0px; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.35); z-index: 9999; color: rgb(255, 255, 255); font-weight: 700; font-size: 16px;"><style>@keyframes __spin{to{transform:rotate(360deg)}}</style><div style="background: rgba(0, 0, 0, 0.6); padding: 14px 18px; border-radius: 10px; display: flex; gap: 10px; align-items: center;"><div style="width: 16px; height: 16px; border-width: 2px; border-style: solid; border-color: transparent rgb(255, 255, 255) rgb(255, 255, 255); border-image: initial; border-radius: 50%; animation: 0.8s linear 0s infinite normal none running __spin;"></div><span id="__loading_msg__">출금 한도 불러오는 중...</span></div></div>
+
+
+
+</body></html>

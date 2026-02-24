@@ -1,0 +1,309 @@
+"""
+Evidence API endpoints
+POST /evidence/presigned-url - Generate S3 presigned upload URL
+POST /evidence/upload-complete - Notify upload completion and create evidence record
+GET /evidence/{evidence_id} - Get evidence detail with AI analysis
+GET /evidence/{evidence_id}/status - Get evidence processing status
+POST /evidence/{evidence_id}/retry - Retry failed evidence processing
+
+Note: GET /cases/{case_id}/evidence is in cases.py (follows REST resource nesting)
+"""
+
+import logging
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+
+from app.core.container import get_evidence_service
+from app.db.schemas import (
+    PresignedUrlRequest,
+    PresignedUrlResponse,
+    UploadCompleteRequest,
+    UploadCompleteResponse,
+    EvidenceDetail,
+    SpeakerMappingUpdateRequest,
+    SpeakerMappingResponse
+)
+from app.services.evidence_service import EvidenceService
+from app.core.dependencies import get_current_user_id
+from app.core.error_messages import ErrorMessages
+from app.middleware import NotFoundError, PermissionError, ValidationError
+
+logger = logging.getLogger(__name__)
+
+
+# Response models for new endpoints
+class EvidenceStatusResponse(BaseModel):
+    """Response model for evidence status"""
+    evidence_id: str
+    status: str
+    error_message: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class RetryResponse(BaseModel):
+    """Response model for retry endpoint"""
+    success: bool
+    message: str
+    evidence_id: str
+    status: str
+
+
+router = APIRouter()
+
+
+@router.post("/presigned-url", response_model=PresignedUrlResponse, status_code=status.HTTP_200_OK)
+def generate_presigned_upload_url(
+    request: PresignedUrlRequest,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Generate S3 presigned URL for evidence file upload
+
+    **Request Body:**
+    - case_id: Case ID (required)
+    - filename: Original filename (required)
+    - content_type: MIME type (required)
+
+    **Response:**
+    - upload_url: S3 presigned POST URL
+    - fields: Form fields for multipart upload
+    - evidence_temp_id: Temporary evidence ID
+
+    **Errors:**
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Case not found
+
+    **Security:**
+    - Requires valid JWT token
+    - User must be a member of the case
+    - Presigned URL expires in 5 minutes max
+    - Direct upload to S3 (no proxy through backend)
+
+    **Usage:**
+    Frontend should use the returned upload_url and fields to POST
+    the file directly to S3 using multipart/form-data.
+    """
+    return evidence_service.generate_upload_presigned_url(request, user_id)
+
+
+@router.post("/upload-complete", response_model=UploadCompleteResponse, status_code=status.HTTP_201_CREATED)
+def handle_upload_complete(
+    request: UploadCompleteRequest,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Notify backend that S3 upload is complete and create evidence record
+
+    **Request Body:**
+    - case_id: Case ID (required)
+    - evidence_temp_id: Temporary evidence ID from presigned-url response (required)
+    - s3_key: S3 object key where file was uploaded (required)
+    - note: Optional note about the evidence
+
+    **Response:**
+    - evidence_id: Created evidence ID
+    - case_id: Case ID
+    - filename: Extracted filename
+    - s3_key: S3 object key
+    - status: "pending" (waiting for AI processing)
+    - created_at: Creation timestamp
+
+    **Errors:**
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Case not found
+
+    **Process:**
+    1. Validates user has access to the case
+    2. Creates evidence metadata record in DynamoDB
+    3. AI Worker will automatically process when triggered by S3 event
+
+    **Security:**
+    - Requires valid JWT token
+    - User must be a member of the case
+    """
+    return evidence_service.handle_upload_complete(request, user_id)
+
+
+@router.get("/{evidence_id}", response_model=EvidenceDetail, status_code=status.HTTP_200_OK)
+def get_evidence_detail(
+    evidence_id: str,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Get detailed evidence metadata with AI analysis results
+
+    **Path Parameters:**
+    - evidence_id: Evidence ID
+
+    **Response:**
+    - Complete evidence metadata including:
+      - Basic info: id, case_id, type, filename, s3_key
+      - AI analysis: ai_summary, labels, insights, content (STT/OCR)
+      - Timestamps: created_at, timestamp (event time in evidence)
+
+    **Errors:**
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Evidence not found
+
+    **Security:**
+    - Requires valid JWT token
+    - User must be a member of the case that owns this evidence
+
+    **Notes:**
+    - AI analysis fields (ai_summary, labels, insights, content) are available
+      only when status="done" (AI Worker processing completed)
+    - For pending/processing evidence, these fields will be null
+    - Full text content (STT/OCR) is included for display and manual review
+    """
+    return evidence_service.get_evidence_detail(evidence_id, user_id)
+
+
+@router.get("/{evidence_id}/status", response_model=EvidenceStatusResponse, status_code=status.HTTP_200_OK)
+def get_evidence_status(
+    evidence_id: str,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Get current processing status of evidence
+
+    **Path Parameters:**
+    - evidence_id: Evidence ID
+
+    **Response:**
+    - evidence_id: Evidence ID
+    - status: Current status (pending, uploaded, processing, completed, failed)
+    - error_message: Error message if status is "failed"
+    - updated_at: Last update timestamp
+
+    **Errors:**
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Evidence not found
+
+    **Status Values:**
+    - pending: Upload URL generated, waiting for file
+    - uploaded: File uploaded, waiting for processing
+    - processing: AI Worker is processing
+    - completed: Processing complete
+    - failed: Processing failed (can retry)
+    """
+    try:
+        result = evidence_service.get_evidence_status(evidence_id, user_id)
+        return EvidenceStatusResponse(**result)
+    except NotFoundError as e:
+        logger.warning(f"Evidence not found: {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ErrorMessages.EVIDENCE_NOT_FOUND)
+    except PermissionError as e:
+        logger.warning(f"Permission denied for evidence {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="증거에 접근할 권한이 없습니다")
+
+
+@router.post("/{evidence_id}/retry", response_model=RetryResponse, status_code=status.HTTP_200_OK)
+def retry_evidence_processing(
+    evidence_id: str,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Retry processing for failed evidence
+
+    **Path Parameters:**
+    - evidence_id: Evidence ID to retry
+
+    **Response:**
+    - success: Whether retry was initiated successfully
+    - message: Status message
+    - evidence_id: Evidence ID
+    - status: New status after retry attempt
+
+    **Errors:**
+    - 400: Evidence not in retryable state (cannot retry)
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Evidence not found
+
+    **Process:**
+    1. Validates evidence is in "failed", "pending", or "processing" state
+    2. Updates status to "processing"
+    3. Re-invokes AI Worker Lambda
+    4. If invocation fails, status returns to "failed"
+
+    **State Machine:**
+    - FAILED → PROCESSING (on retry)
+    - PENDING → PROCESSING (on retry)
+    - PROCESSING → PROCESSING (on retry for stuck items)
+    """
+    try:
+        result = evidence_service.retry_processing(evidence_id, user_id)
+        return RetryResponse(**result)
+    except NotFoundError as e:
+        logger.warning(f"Evidence not found for retry: {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ErrorMessages.EVIDENCE_NOT_FOUND)
+    except PermissionError as e:
+        logger.warning(f"Permission denied for evidence retry {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="증거에 접근할 권한이 없습니다")
+    except ValueError as e:
+        logger.warning(f"Evidence retry validation error {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="증거 재처리를 시도할 수 없습니다")
+
+
+@router.patch("/{evidence_id}/speaker-mapping", response_model=SpeakerMappingResponse, status_code=status.HTTP_200_OK)
+def update_speaker_mapping(
+    evidence_id: str,
+    request: SpeakerMappingUpdateRequest,
+    user_id: str = Depends(get_current_user_id),
+    evidence_service: EvidenceService = Depends(get_evidence_service)
+):
+    """
+    Update speaker mapping for evidence
+
+    **Path Parameters:**
+    - evidence_id: Evidence ID
+
+    **Request Body:**
+    - speaker_mapping: Dict mapping speaker labels to party info
+      - Key: Speaker label (e.g., "나", "상대방")
+      - Value: Object with party_id and party_name
+      - Empty object {} clears the mapping
+
+    **Response:**
+    - evidence_id: Evidence ID
+    - speaker_mapping: Updated mapping (null if cleared)
+    - updated_at: Last update timestamp
+    - updated_by: User ID who made the update
+
+    **Errors:**
+    - 400: Invalid mapping (party not in case, too many speakers, label too long)
+    - 401: Not authenticated
+    - 403: User does not have access to case
+    - 404: Evidence not found
+
+    **Validation:**
+    - Maximum 10 speakers per mapping
+    - Speaker label max 50 characters
+    - All party_ids must belong to the same case (Case Isolation)
+
+    **Usage:**
+    Maps conversation speakers in evidence (e.g., "나", "상대방" from KakaoTalk)
+    to actual party nodes from the case's relationship graph.
+    """
+    try:
+        return evidence_service.update_speaker_mapping(evidence_id, user_id, request)
+    except NotFoundError as e:
+        logger.warning(f"Evidence not found for speaker mapping: {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ErrorMessages.EVIDENCE_NOT_FOUND)
+    except PermissionError as e:
+        logger.warning(f"Permission denied for speaker mapping {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="증거에 접근할 권한이 없습니다")
+    except ValidationError as e:
+        logger.warning(f"Speaker mapping validation error {evidence_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

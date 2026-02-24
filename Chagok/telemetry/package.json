@@ -1,0 +1,12 @@
+{
+  "name": "chagok-telemetry",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "next": "^14.0.0"
+  }
+}

@@ -1,0 +1,276 @@
+# .github/workflows/deploy-paralegal.yml
+# CI/CD: 단일 production 환경 배포
+
+name: Deploy CHAGOK to AWS
+
+on:
+  # main, dev 브랜치 푸시 시 자동 배포
+  push:
+    branches: [main, dev]
+  # 수동 배포 (긴급 시)
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  # ============================================
+  # Backend Build (Parallel Job)
+  # ============================================
+  build-backend:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Backend
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: leh-backend
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          # BuildKit 캐시를 사용한 빌드
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance=false \
+            --sbom=false \
+            --cache-from type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:cache \
+            --cache-to type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:cache,mode=max \
+            -f ./backend/Dockerfile.lambda \
+            -t $IMAGE_URI \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --push \
+            ./backend
+
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "✅ Backend image built: $IMAGE_URI"
+
+  # ============================================
+  # AI Worker Build (Parallel Job)
+  # ============================================
+  build-ai-worker:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build & Push AI Worker
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: leh-ai-worker
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          # BuildKit 캐시를 사용한 ARM64 빌드
+          docker buildx build \
+            --platform linux/arm64 \
+            --provenance=false \
+            --sbom=false \
+            --cache-from type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:cache \
+            --cache-to type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:cache,mode=max \
+            -f ./ai_worker/Dockerfile.lambda \
+            -t $IMAGE_URI \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --push \
+            ./ai_worker
+
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "✅ AI Worker image built: $IMAGE_URI"
+
+  # ============================================
+  # Frontend Build (Parallel Job)
+  # ============================================
+  build-frontend:
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      s3_bucket: ${{ steps.env.outputs.S3_BUCKET }}
+      cf_dist: ${{ steps.env.outputs.CF_DIST }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        id: env
+        run: |
+          echo "ENV=production" >> $GITHUB_OUTPUT
+          echo "S3_BUCKET=${{ secrets.S3_FRONTEND_BUCKET }}" >> $GITHUB_OUTPUT
+          echo "CF_DIST=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
+          NEXT_PUBLIC_APP_ENV: ${{ steps.env.outputs.ENV }}
+          NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
+          NEXT_OUTPUT_EXPORT: 'true'
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/out/
+          retention-days: 1
+
+  # ============================================
+  # Deploy (After all builds complete)
+  # ============================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-ai-worker, build-frontend]
+    if: ${{ always() && needs.build-backend.result == 'success' && needs.build-ai-worker.result == 'success' && needs.build-frontend.result == 'success' }}
+    environment: production
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set environment variables
+        id: env
+        run: |
+          echo "ENV=production" >> $GITHUB_OUTPUT
+          echo "S3_BUCKET=${{ secrets.S3_FRONTEND_BUCKET }}" >> $GITHUB_OUTPUT
+          echo "CF_DIST=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" >> $GITHUB_OUTPUT
+
+      # Update Lambda functions
+      - name: Update Backend Lambda
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          aws lambda update-function-code \
+            --function-name leh-backend \
+            --image-uri $ECR_REGISTRY/leh-backend:${{ github.sha }}
+          echo "✅ Backend Lambda updated"
+
+      - name: Update AI Worker Lambda
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          aws lambda update-function-code \
+            --function-name leh-ai-worker \
+            --image-uri $ECR_REGISTRY/leh-ai-worker:${{ github.sha }}
+          echo "✅ AI Worker Lambda updated"
+
+      # Deploy Frontend to S3
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend-out/
+
+      - name: Deploy Frontend to S3
+        run: |
+          # Static assets with long cache
+          aws s3 sync ./frontend-out s3://${{ steps.env.outputs.S3_BUCKET }} --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "_next/data/*"
+
+          # HTML files with no cache
+          aws s3 sync ./frontend-out s3://${{ steps.env.outputs.S3_BUCKET }} --delete \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --include "*.html" \
+            --include "_next/data/*"
+
+          echo "✅ Frontend deployed to S3"
+
+      - name: Invalidate CloudFront Cache
+        id: invalidate
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.env.outputs.CF_DIST }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "INVALIDATION_ID=$INVALIDATION_ID" >> $GITHUB_OUTPUT
+          echo "Created invalidation: $INVALIDATION_ID"
+
+      - name: Wait for CloudFront Invalidation
+        run: |
+          echo "Waiting for CloudFront invalidation to complete..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ steps.env.outputs.CF_DIST }} \
+            --id ${{ steps.invalidate.outputs.INVALIDATION_ID }}
+          echo "✅ CloudFront invalidation completed"
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Lambda | ✅ Updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Worker Lambda | ✅ Updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (S3) | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| CloudFront | ✅ Invalidated |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ steps.env.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
