@@ -3,15 +3,7 @@
 import { useRef, useState } from "react";
 import { applyWithdrawal, searchWithdrawals } from "@/actions/legacy";
 import { useRouter } from "next/navigation";
-
-const BANKS = [
-  { code: '003', name: 'IBK기업은행' }, { code: '004', name: 'KB국민은행' },
-  { code: '011', name: 'NH농협은행' }, { code: '020', name: '우리은행' },
-  { code: '081', name: '하나은행' }, { code: '088', name: '신한은행' },
-  { code: '089', name: '케이뱅크' }, { code: '090', name: '카카오뱅크' },
-  { code: '092', name: '토스뱅크' }, { code: '045', name: '새마을금고' },
-  { code: '071', name: '우체국' }, { code: '048', name: '신협' }
-];
+import { BANKS } from "@/lib/bank-codes";
 
 export default function WithdrawalApplyPage() {
   const router = useRouter();
@@ -61,40 +53,41 @@ export default function WithdrawalApplyPage() {
     if (res.code === "1") {
       alert("출금 신청 완료");
       router.push("/withdrawals");
-    } else alert(`실패: ${res.message}`);
+    } else if (res.code === "VALIDATION_ERROR") alert(res.message);
+    else alert("출금 신청 처리 중 오류가 발생했습니다.");
     setLoading(false);
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="border-b border-base-300 pb-4">
-        <h1 className="text-xl font-bold tracking-tight">신규 출금 신청 등록</h1>
-        <p className="text-sm text-base-content/50 mt-1">지급 대행을 위한 출금 정보를 정확히 입력하십시오.</p>
+    <div className="max-w-2xl mx-auto space-y-8">
+      <div className="border-b border-base-300 pb-5">
+        <h1 className="text-2xl font-bold tracking-tight">신규 출금 신청 등록</h1>
+        <p className="text-base text-base-content/50 mt-2">지급 대행을 위한 출금 정보를 정확히 입력하십시오.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card card-border bg-base-100">
-        <div className="card-body space-y-6">
+        <div className="card-body space-y-7 p-8">
           <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="label text-xs font-semibold">예금주 성함 *</label>
+            <div className="space-y-2">
+              <label className="label text-sm font-semibold">예금주 성함 *</label>
               <div className="join w-full">
                 <input name="bankuser" required className="input input-bordered join-item flex-1 font-semibold" placeholder="성함 입력" />
-                <button type="button" onClick={handlePrevLookup} className="btn btn-ghost join-item text-xs">이전내역</button>
+                <button type="button" onClick={handlePrevLookup} className="btn btn-ghost join-item">이전내역</button>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="label text-xs font-semibold">출금 신청 금액 (원) *</label>
-              <input name="money" type="number" required className="input input-bordered w-full text-lg font-bold text-right font-mono tabular-nums" placeholder="0" />
+            <div className="space-y-2">
+              <label className="label text-sm font-semibold">출금 신청 금액 (원) *</label>
+              <input name="money" type="number" required className="input input-bordered w-full text-xl font-bold text-right font-mono tabular-nums" placeholder="0" />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="space-y-1.5">
-              <label className="label text-xs font-semibold">은행명</label>
+            <div className="space-y-2">
+              <label className="label text-sm font-semibold">은행명</label>
               <input name="bankname" readOnly className="input input-bordered w-full bg-base-200" placeholder="자동입력" />
             </div>
-            <div className="space-y-1.5">
-              <label className="label text-xs font-semibold">은행 선택 *</label>
+            <div className="space-y-2">
+              <label className="label text-sm font-semibold">은행 선택 *</label>
               <select name="bankcode" required className="select select-bordered w-full font-semibold"
                 onChange={(e) => {
                   const bank = BANKS.find(b => b.code === e.target.value);
@@ -106,18 +99,18 @@ export default function WithdrawalApplyPage() {
                 {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
               </select>
             </div>
-            <div className="space-y-1.5">
-              <label className="label text-xs font-semibold">연락처 *</label>
+            <div className="space-y-2">
+              <label className="label text-sm font-semibold">연락처 *</label>
               <input name="phone" required className="input input-bordered w-full font-mono" placeholder="01012345678" />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="label text-xs font-semibold">출금 계좌 번호 *</label>
-            <input name="banknumber" required className="input input-bordered w-full text-base font-mono font-bold tracking-tight" placeholder="하이픈(-) 없이 숫자만 입력" />
+          <div className="space-y-2">
+            <label className="label text-sm font-semibold">출금 계좌 번호 *</label>
+            <input name="banknumber" required className="input input-bordered w-full text-lg font-mono font-bold tracking-tight" placeholder="하이픈(-) 없이 숫자만 입력" />
           </div>
 
-          <button type="submit" disabled={loading} className="btn btn-primary btn-block">
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block btn-lg">
             출금 신청 제출
           </button>
         </div>
@@ -126,22 +119,22 @@ export default function WithdrawalApplyPage() {
       {/* Prev History Modal */}
       <dialog ref={modalRef} className="modal">
         <div className="modal-box max-w-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-base">이전 출금 내역 조회</h3>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="font-bold text-lg">이전 출금 내역 조회</h3>
             <form method="dialog">
               <button className="btn btn-ghost btn-sm btn-circle">&times;</button>
             </form>
           </div>
-          <div className="space-y-1.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
             {prevHistory.map((h, i) => (
-              <button key={i} onClick={() => handleApplyFromHistory(h)} className="w-full text-left p-3 border border-base-300 rounded-lg hover:bg-primary/5 flex justify-between items-center transition-colors group">
+              <button key={i} onClick={() => handleApplyFromHistory(h)} className="w-full text-left p-4 border border-base-300 rounded-lg hover:bg-primary/5 flex justify-between items-center transition-colors group">
                 <div className="flex flex-col">
-                  <span className="font-bold text-sm group-hover:text-primary">{h._BANKNAME} / {h._BANKUSER}</span>
-                  <span className="text-xs font-mono text-base-content/40">{h._BANKNUMBER}</span>
+                  <span className="font-bold text-base group-hover:text-primary">{h._BANKNAME} / {h._BANKUSER}</span>
+                  <span className="text-sm font-mono text-base-content/40">{h._BANKNUMBER}</span>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-sm font-mono tabular-nums">{Number(h._MONEY).toLocaleString()}원</div>
-                  <div className="text-2xs text-base-content/30">{h._CREATEDATE}</div>
+                  <div className="font-bold text-base font-mono tabular-nums">{Number(h._MONEY).toLocaleString()}원</div>
+                  <div className="text-xs text-base-content/30">{h._CREATE_DATETIME}</div>
                 </div>
               </button>
             ))}

@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Page Error]", error);
+    console.error("[Page Error] digest:", error.digest);
   }, [error]);
 
   return (
@@ -22,7 +22,12 @@ export default function Error({
           </div>
           <h2 className="card-title">오류가 발생했습니다</h2>
           <p className="text-sm text-base-content/50">
-            {error.message || "페이지를 로드할 수 없습니다. 잠시 후 다시 시도해 주세요."}
+            페이지를 로드할 수 없습니다. 잠시 후 다시 시도해 주세요.
+            {error.digest && (
+              <span className="block text-2xs mt-1 text-base-content/30">
+                오류코드: {error.digest}
+              </span>
+            )}
           </p>
           <div className="card-actions mt-4">
             <button onClick={reset} className="btn btn-primary btn-sm">다시 시도</button>

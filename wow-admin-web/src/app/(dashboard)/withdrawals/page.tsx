@@ -26,12 +26,12 @@ export default async function WithdrawalsPage(props: {
   const errorCount = listData.length - successCount - pendingCount;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header Row */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-5">
-          <h1 className="text-xl font-bold tracking-tight">출금 통합 관리</h1>
-          <div role="tablist" className="tabs tabs-box tabs-sm">
+          <h1 className="text-2xl font-bold tracking-tight">출금 통합 관리</h1>
+          <div role="tablist" className="tabs tabs-box">
             <Link
               role="tab"
               href={`/withdrawals?tab=active&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
@@ -39,7 +39,7 @@ export default async function WithdrawalsPage(props: {
             >
               출금신청내역
               {activeData.length > 0 && (
-                <span className="badge badge-sm badge-ghost ml-1.5 font-mono">{activeData.length}</span>
+                <span className="badge badge-ghost ml-2 font-mono">{activeData.length}</span>
               )}
             </Link>
             <Link
@@ -49,54 +49,54 @@ export default async function WithdrawalsPage(props: {
             >
               출금통지내역
               {historyData.length > 0 && (
-                <span className="badge badge-sm badge-ghost ml-1.5 font-mono">{historyData.length}</span>
+                <span className="badge badge-ghost ml-2 font-mono">{historyData.length}</span>
               )}
             </Link>
           </div>
         </div>
-        <Link href="/withdrawals/apply" className="btn btn-primary btn-sm">
+        <Link href="/withdrawals/apply" className="btn btn-primary">
           신규 출금 신청
         </Link>
       </div>
 
       {/* Summary Stats */}
       <div className="stats stats-horizontal shadow w-full">
-        <div className="stat">
-          <div className="stat-title">총 신청 금액</div>
-          <div className="stat-value text-xl font-mono tabular-nums">
-            {totalAmount.toLocaleString()}<span className="text-xs text-base-content/40 font-medium ml-1">원</span>
+        <div className="stat py-5">
+          <div className="stat-title text-sm">총 신청 금액</div>
+          <div className="stat-value text-2xl font-mono tabular-nums">
+            {totalAmount.toLocaleString()}<span className="text-sm text-base-content/40 font-medium ml-1">원</span>
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-title">정상 처리</div>
-          <div className="stat-value text-xl font-mono tabular-nums text-success">
-            {successCount}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
+        <div className="stat py-5">
+          <div className="stat-title text-sm">정상 처리</div>
+          <div className="stat-value text-2xl font-mono tabular-nums text-success">
+            {successCount}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-title">대기중</div>
-          <div className="stat-value text-xl font-mono tabular-nums text-warning">
-            {pendingCount}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
+        <div className="stat py-5">
+          <div className="stat-title text-sm">대기중</div>
+          <div className="stat-value text-2xl font-mono tabular-nums text-warning">
+            {pendingCount}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-title">오류 / 취소</div>
-          <div className={`stat-value text-xl font-mono tabular-nums ${errorCount > 0 ? "text-error" : ""}`}>
-            {errorCount}<span className="text-xs text-base-content/40 font-medium ml-1">건</span>
+        <div className="stat py-5">
+          <div className="stat-title text-sm">오류 / 취소</div>
+          <div className={`stat-value text-2xl font-mono tabular-nums ${errorCount > 0 ? "text-error" : ""}`}>
+            {errorCount}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
       <div className="card card-border bg-base-100">
-        <div className="card-body p-4">
+        <div className="card-body p-5">
           <form className="flex items-center gap-3 justify-center">
-            <span className="text-xs font-medium text-base-content/50 uppercase tracking-wide">조회기간</span>
-            <input name="sdate" defaultValue={sdate} className="input input-bordered input-sm font-mono w-48" />
-            <span className="text-base-content/30 font-medium">~</span>
-            <input name="edate" defaultValue={edate} className="input input-bordered input-sm font-mono w-48" />
+            <span className="text-sm font-medium text-base-content/50 uppercase tracking-wide">조회기간</span>
+            <input name="sdate" defaultValue={sdate} className="input input-bordered font-mono w-52" />
+            <span className="text-base-content/30 font-medium text-lg">~</span>
+            <input name="edate" defaultValue={edate} className="input input-bordered font-mono w-52" />
             <input type="hidden" name="tab" value={tab} />
-            <button className="btn btn-primary btn-sm ml-1">조회</button>
+            <button className="btn btn-primary ml-2">조회</button>
           </form>
         </div>
       </div>
