@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { login, logout } from "@/lib/auth";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
 
 // 인메모리 로그인 Rate Limiter
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -56,9 +57,14 @@ export async function loginAction(
 
   if (!result.success) {
     recordLoginAttempt(username, false);
-    // 실패 시 1초 지연 (brute-force 방어)
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return { error: result.message };
+    
+    // 레거시 에러 코드가 있으면 한국어 메시지로 변환
+    const errorMessage = result.code 
+      ? getLegacyErrorMessage("/10100", result.code) 
+      : result.message;
+      
+    return { error: errorMessage };
   }
 
   recordLoginAttempt(username, true);

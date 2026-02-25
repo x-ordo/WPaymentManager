@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { applyWithdrawal, searchWithdrawals } from "@/actions/legacy";
 import { useRouter } from "next/navigation";
 import { BANKS } from "@/lib/bank-codes";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
+import { toast } from "@/lib/toast";
 
 export default function WithdrawalApplyPage() {
   const router = useRouter();
@@ -13,14 +15,17 @@ export default function WithdrawalApplyPage() {
 
   const handlePrevLookup = async () => {
     const name = (document.getElementsByName("bankuser")[0] as HTMLInputElement).value;
-    if (!name) return alert("예금주 이름을 먼저 입력하세요.");
+    if (!name) {
+      toast.error("예금주 성함을 먼저 입력하세요.");
+      return;
+    }
     setLoading(true);
     const res = await searchWithdrawals(name);
     if (res.code === "1") {
       setPrevHistory(res.data || []);
       modalRef.current?.showModal();
     } else {
-      alert("이전 내역이 없습니다.");
+      toast.error("이전 내역이 없습니다.");
     }
     setLoading(false);
   };
@@ -49,13 +54,24 @@ export default function WithdrawalApplyPage() {
 
     if (!confirm("출금 신청을 진행하시겠습니까?")) return;
     setLoading(true);
-    const res = await applyWithdrawal(params);
-    if (res.code === "1") {
-      alert("출금 신청 완료");
-      router.push("/withdrawals");
-    } else if (res.code === "VALIDATION_ERROR") alert(res.message);
-    else alert("출금 신청 처리 중 오류가 발생했습니다.");
-    setLoading(false);
+    
+    try {
+      const res = await applyWithdrawal(params);
+      
+      if (res.code === "1") {
+        toast.success("출금 신청이 완료되었습니다.");
+        router.push("/withdrawals");
+      } else {
+        const errorMsg = res.code === "VALIDATION_ERROR" 
+          ? res.message 
+          : getLegacyErrorMessage("/50000", res.code);
+        toast.error(errorMsg);
+      }
+    } catch (error) {
+      toast.error("서버 통신 중 장애가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

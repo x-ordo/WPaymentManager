@@ -1,4 +1,5 @@
 import { getDepositApplications, getDepositNotifications } from "@/actions/legacy";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,10 @@ export default async function DepositsPage(props: {
 
   const appRes = await getDepositApplications(sdate, edate);
   const notiRes = await getDepositNotifications(sdate, edate);
+
+  // 에러 체크 (1:성공, 3:데이터없음 제외한 모든 코드는 에러로 간주)
+  const errorRes = (appRes.code !== "1" && appRes.code !== "3") ? appRes : 
+                   (notiRes.code !== "1" && notiRes.code !== "3") ? notiRes : null;
 
   const appData = appRes.data || [];
   const notiData = notiRes.data || [];
@@ -103,8 +108,25 @@ export default async function DepositsPage(props: {
 
       {/* Data Table */}
       <div className="card card-border bg-base-100 overflow-hidden">
-        <table className="table table-zebra">
-          <thead>
+        {errorRes ? (
+          <div className="py-32 text-center">
+            <div className="text-error font-bold text-xl mb-3 flex items-center justify-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-error animate-pulse" />
+              데이터 로드 오류
+            </div>
+            <div className="text-base-content/50 text-base font-medium">
+              {getLegacyErrorMessage(tab === "application" ? "/21000" : "/40000", errorRes.code)}
+            </div>
+            <a 
+              href={`/deposits?tab=${tab}&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
+              className="btn btn-ghost btn-sm mt-6 text-base-content/30"
+            >
+              새로고침 시도
+            </a>
+          </div>
+        ) : (
+          <table className="table table-zebra">
+            <thead>
             <tr className="text-sm">
               <th>일시</th>
               <th>가맹점</th>
@@ -129,7 +151,14 @@ export default async function DepositsPage(props: {
                   <td className="font-mono text-sm text-base-content/50 whitespace-nowrap">
                     {row._CREATE_DATETIME || row._DATETIME}
                   </td>
-                  <td className="font-semibold">{row._AFFILIATE_ID}</td>
+                  <td className="font-semibold">
+                    {row._AFFILIATE_ID}
+                    {row._IN_BANK_CODE && (
+                      <span className="ml-2 text-[10px] bg-base-200 px-1 py-0.5 rounded text-base-content/40 font-mono">
+                        {row._IN_BANK_CODE}
+                      </span>
+                    )}
+                  </td>
                   <td className="font-mono text-sm">
                     {tab === "application" ? (
                       <span className="text-base-content/50">{row._UNIQUEID}</span>
@@ -168,6 +197,7 @@ export default async function DepositsPage(props: {
             )}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

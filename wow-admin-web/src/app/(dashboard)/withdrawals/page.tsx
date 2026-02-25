@@ -1,4 +1,5 @@
 import { getWithdrawalList, getWithdrawalNotifications } from "@/actions/legacy";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
 import WithdrawalTable from "./WithdrawalTable";
 import Link from "next/link";
 
@@ -15,6 +16,10 @@ export default async function WithdrawalsPage(props: {
 
   const activeRes = await getWithdrawalList(sdate, edate);
   const historyRes = await getWithdrawalNotifications(sdate, edate);
+
+  // 에러 체크 (1:성공, 3:데이터없음 제외한 모든 코드는 에러로 간주)
+  const errorRes = (activeRes.code !== "1" && activeRes.code !== "3") ? activeRes : 
+                   (historyRes.code !== "1" && historyRes.code !== "3") ? historyRes : null;
 
   const activeData = activeRes.data || [];
   const historyData = historyRes.data || [];
@@ -101,7 +106,25 @@ export default async function WithdrawalsPage(props: {
         </div>
       </div>
 
-      <WithdrawalTable initialData={listData} viewMode={tab} />
+      {errorRes ? (
+        <div className="card card-border bg-base-100 p-20 text-center">
+          <div className="text-error font-bold text-xl mb-3 flex items-center justify-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-error animate-pulse" />
+            데이터 로드 오류
+          </div>
+          <div className="text-base-content/50 text-base font-medium">
+            {getLegacyErrorMessage(tab === "active" ? "/51000" : "/30000", errorRes.code)}
+          </div>
+          <Link 
+            href={`/withdrawals?tab=${tab}&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
+            className="btn btn-ghost btn-sm mt-6 text-base-content/30"
+          >
+            새로고침 시도
+          </Link>
+        </div>
+      ) : (
+        <WithdrawalTable initialData={listData} viewMode={tab} />
+      )}
     </div>
   );
 }

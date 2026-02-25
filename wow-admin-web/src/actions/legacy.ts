@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { fetchLegacy, getCachedUserName } from "@/lib/legacy-api";
+import { fetchLegacy, getCachedUserName, getCachedUserClass } from "@/lib/legacy-api";
 import { BANK_MAP } from "@/lib/bank-codes";
 import {
   validateDate,
@@ -16,7 +16,12 @@ import {
 
 // 로그인 시 캐싱된 사용자 이름 조회
 export async function getUserName() {
-  return getCachedUserName();
+  return await getCachedUserName();
+}
+
+// 로그인 시 캐싱된 사용자 등급 조회
+export async function getUserClass() {
+  return await getCachedUserClass();
 }
 
 // [90000] 보유금액, 사용가능일, 수수료 정보

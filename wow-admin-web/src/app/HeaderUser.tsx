@@ -2,12 +2,19 @@ import { getUserName } from "@/actions/legacy";
 import { getSessionUser } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 
+const CLASS_MAP: Record<string, string> = {
+  "0": "가맹점",
+  "40": "지사",
+  "60": "에이전시",
+  "80": "운영자",
+  "100": "마스터",
+};
+
 export async function HeaderUser() {
-  const [userName, sessionUser] = await Promise.all([
-    getUserName(),
-    getSessionUser(),
-  ]);
-  const displayName = sessionUser || userName;
+  const sessionUser = await getSessionUser();
+  const displayName = sessionUser?.userName || "Guest";
+  const userClass = sessionUser?.userClass || "0";
+  const userRole = CLASS_MAP[userClass] || "일반";
 
   return (
     <div className="dropdown dropdown-end">
@@ -15,7 +22,7 @@ export async function HeaderUser() {
         <div className="flex flex-col items-end">
           <span className="text-base font-bold">{displayName}</span>
           <span className="text-xs font-medium text-base-content/40">
-            {sessionUser ? "운영자" : "Master"}
+            {userRole}
           </span>
         </div>
         <div className="avatar placeholder">

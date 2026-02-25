@@ -1,10 +1,8 @@
 /**
- * 세션 토큰 생성 및 검증 유틸리티.
- * Edge Runtime과 Node.js 모두에서 사용 가능.
- * (server-only 제약 없음 — middleware에서 import 가능)
+ * 세션 토큰 생성 및 검증 유틸리티 (Final Verification)
  */
 
-const SESSION_MAX_AGE = 8 * 60 * 60; // 8시간
+const DEFAULT_MAX_AGE = 8 * 60 * 60; // 8시간
 
 async function hmacSign(payload: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -21,7 +19,6 @@ async function hmacSign(payload: string, secret: string): Promise<string> {
     .join("");
 }
 
-/** constant-time HMAC 검증 (타이밍 공격 방어) */
 async function hmacVerify(
   payload: string,
   signature: string,
@@ -41,37 +38,44 @@ async function hmacVerify(
   return crypto.subtle.verify("HMAC", key, sigBytes, encoder.encode(payload));
 }
 
-/** 세션 토큰 생성: username:expiry:hmac */
+/** 
+ * 세션 데이터 구조: userId|password|connectionId|userName|userClass
+ */
 export async function createSessionToken(
-  username: string,
+  data: { userId: string; pass: string; connectionId: string; userName: string; userClass: string },
   secret: string
 ): Promise<string> {
-  const expiry = Math.floor(Date.now() / 1000) + SESSION_MAX_AGE;
-  const payload = `${username}:${expiry}`;
+  const maxAge = Number(process.env.SESSION_MAX_AGE) || DEFAULT_MAX_AGE;
+  const expiry = Math.floor(Date.now() / 1000) + maxAge;
+  const payload = `${data.userId}|${data.pass}|${data.connectionId}|${data.userName}|${data.userClass}:${expiry}`;
   const sig = await hmacSign(payload, secret);
   return `${payload}:${sig}`;
 }
 
-/** 세션 토큰 검증 → 유효하면 username, 아니면 null */
 export async function verifySessionToken(
   token: string,
   secret: string
-): Promise<string | null> {
-  const parts = token.split(":");
-  if (parts.length !== 3) return null;
+): Promise<{ userId: string; pass: string; connectionId: string; userName: string; userClass: string } | null> {
+  try {
+    const parts = token.split(":");
+    if (parts.length !== 3) return null;
 
-  const [username, expiryStr, signature] = parts;
-  const payload = `${username}:${expiryStr}`;
+    const [payload, expiryStr, signature] = parts;
+    const fullPayload = `${payload}:${expiryStr}`;
 
-  // HMAC 검증 (constant-time 비교)
-  if (!(await hmacVerify(payload, signature, secret))) return null;
+    if (!(await hmacVerify(fullPayload, signature, secret))) return null;
 
-  // 만료 검증
-  const expiry = parseInt(expiryStr, 10);
-  if (isNaN(expiry) || Math.floor(Date.now() / 1000) > expiry) return null;
+    const expiry = parseInt(expiryStr, 10);
+    if (isNaN(expiry) || Math.floor(Date.now() / 1000) > expiry) return null;
 
-  return username;
+    const [userId, pass, connectionId, userName, userClass] = payload.split("|");
+    if (!userId || !pass || !connectionId) return null;
+
+    return { userId, pass, connectionId, userName, userClass };
+  } catch (e) {
+    return null;
+  }
 }
 
 export const SESSION_COOKIE = "wow_session";
-export { SESSION_MAX_AGE };
+export const SESSION_MAX_AGE = Number(process.env.SESSION_MAX_AGE) || DEFAULT_MAX_AGE;

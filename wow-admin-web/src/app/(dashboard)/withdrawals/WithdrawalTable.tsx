@@ -3,6 +3,8 @@
 import { useTransition } from "react";
 import { approveWithdrawal, cancelWithdrawal } from "@/actions/legacy";
 import { getBankName } from "@/lib/bank-codes";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
+import { toast } from "@/lib/toast";
 
 export default function WithdrawalTable({ initialData, viewMode }: { initialData: any[], viewMode: string }) {
   const [isPending, startTransition] = useTransition();
@@ -12,16 +14,29 @@ export default function WithdrawalTable({ initialData, viewMode }: { initialData
     if (!confirm(`해당 건을 ${label} 하시겠습니까?`)) return;
 
     startTransition(async () => {
-      const res = await (type === "APPROVE" ? approveWithdrawal(id) : cancelWithdrawal(id));
-      if (res.code === "1") alert(`${label} 완료`);
-      else if (res.code === "VALIDATION_ERROR") alert(res.message);
-      else alert(`${label} 처리 중 오류가 발생했습니다.`);
+      try {
+        const res = await (type === "APPROVE" ? approveWithdrawal(id) : cancelWithdrawal(id));
+        if (res.code === "1") {
+          toast.success(`${label} 처리가 완료되었습니다.`);
+        } else if (res.code === "VALIDATION_ERROR") {
+          toast.error(res.message);
+        } else {
+          const path = type === "APPROVE" ? "/51400" : "/51600";
+          toast.error(getLegacyErrorMessage(path, res.code));
+        }
+      } catch (error) {
+        toast.error(`${label} 중 통신 오류가 발생했습니다.`);
+      }
     });
   };
 
   const getStatusBadge = (row: any) => {
     if (viewMode === "active") {
-      if (row._STATE === "0") return { cls: "badge-ghost badge-outline", label: "대기중" };
+      // API_SPEC_NEW 기반 상태: 0:미처리, 1:처리, 2:오류, 3:취소
+      if (row._STATE === "0") {
+        if (row._SHOP_STATE !== "0") return { cls: "badge-info badge-soft", label: "가맹점승인" };
+        return { cls: "badge-ghost badge-outline", label: "대기중" };
+      }
       if (row._STATE === "1") return { cls: "badge-success badge-soft", label: "처리완료" };
       if (row._STATE === "2") return { cls: "badge-error badge-soft", label: "오류" };
       if (row._STATE === "3") return { cls: "badge-warning badge-soft", label: "취소" };
@@ -69,6 +84,11 @@ export default function WithdrawalTable({ initialData, viewMode }: { initialData
                   <td className="align-top">
                     <div className="font-semibold whitespace-nowrap">{row._BANKNAME || getBankName(row._BANKCODE)}</div>
                     <div className="font-mono text-sm text-base-content/50 mt-0.5">{row._BANKNUMBER}</div>
+                    {row._MEMO && (
+                      <div className="text-[11px] text-primary/60 mt-1 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10 inline-block">
+                        Memo: {row._MEMO}
+                      </div>
+                    )}
                   </td>
                   {viewMode === "history" && (
                     <td className="font-mono text-sm whitespace-nowrap">
@@ -79,9 +99,17 @@ export default function WithdrawalTable({ initialData, viewMode }: { initialData
                     {Number(row._MONEY).toLocaleString()}원
                   </td>
                   <td className="text-center">
-                    <span className={`badge ${status.cls}`}>{status.label}</span>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className={`badge ${status.cls}`}>{status.label}</span>
+                      {row._ADMIN_STATE !== undefined && row._ADMIN_STATE !== "0" && (
+                        <span className="text-[10px] font-bold text-primary uppercase">Admin 승인</span>
+                      )}
+                    </div>
                     {row._RETURNMSG && (
-                      <div className="text-xs text-base-content/40 mt-1 max-w-[8rem] mx-auto truncate" title={row._RETURNMSG}>{row._RETURNMSG}</div>
+                      <div className="text-xs text-base-content/40 mt-1 max-w-[8rem] mx-auto truncate" title={row._RETURNMSG}>
+                        <span className="font-mono text-[10px] mr-1">[{row._RETURNCODE}]</span>
+                        {row._RETURNMSG}
+                      </div>
                     )}
                   </td>
                   <td className="text-center">
