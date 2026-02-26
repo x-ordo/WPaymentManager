@@ -1,3 +1,0 @@
-"""
-LEH Backend Tests Package
-"""

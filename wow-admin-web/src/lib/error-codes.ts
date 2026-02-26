@@ -9,6 +9,7 @@ export const COMMON_ERROR_CODES: Record<string, string> = {
   "402": "세션 정보가 없습니다. 다시 로그인해 주세요.",
   "404": "존재하지 않는 서비스 경로입니다.",
   "500": "데이터베이스 통신 장애가 발생했습니다.",
+  "TIMEOUT": "서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 export const LOGIN_ERROR_CODES: Record<string, string> = {

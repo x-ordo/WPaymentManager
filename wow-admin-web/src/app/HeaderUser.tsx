@@ -1,4 +1,3 @@
-import { getUserName } from "@/actions/legacy";
 import { getSessionUser } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 
@@ -17,35 +16,33 @@ export async function HeaderUser() {
   const userRole = CLASS_MAP[userClass] || "일반";
 
   return (
-    <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="flex items-center gap-3 cursor-pointer">
+    <details className="dropdown dropdown-end">
+      <summary className="btn btn-ghost gap-2">
         <div className="flex flex-col items-end">
-          <span className="text-base font-bold">{displayName}</span>
-          <span className="text-xs font-medium text-base-content/40">
-            {userRole}
-          </span>
+          <span className="text-sm font-bold">{displayName}</span>
+          <span className="text-sm font-medium text-base-content/40">{userRole}</span>
         </div>
-        <div className="avatar placeholder">
-          <div className="bg-primary/10 text-primary w-10 rounded-full border border-base-300">
-            <span className="text-sm font-bold">{displayName.charAt(0)}</span>
+        <div className="avatar avatar-placeholder">
+          <div className="bg-neutral text-neutral-content w-9 rounded-full">
+            <span className="text-sm font-bold">{displayName.charAt(0).toUpperCase()}</span>
           </div>
         </div>
-      </div>
-      <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 w-40 p-2 shadow-lg border border-base-300 mt-2">
+      </summary>
+      <ul className="dropdown-content menu bg-base-100 rounded-box z-10 w-48 p-2 shadow-lg border border-base-300 mt-2">
         <li><LogoutButton /></li>
       </ul>
-    </div>
+    </details>
   );
 }
 
 export function HeaderUserSkeleton() {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <div className="flex flex-col items-end gap-1">
-        <div className="skeleton h-5 w-20" />
-        <div className="skeleton h-3.5 w-12" />
+        <div className="skeleton h-4 w-16" />
+        <div className="skeleton h-3 w-10" />
       </div>
-      <div className="skeleton w-10 h-10 rounded-full" />
+      <div className="skeleton w-9 h-9 rounded-full" />
     </div>
   );
 }

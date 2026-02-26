@@ -12,9 +12,9 @@ export default function LoginPage() {
         <div className="card-body p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary-content">W</span>
+              <span className="text-sm font-bold text-primary-content">C</span>
             </div>
-            <span className="text-lg font-bold tracking-tight">Wow Payment</span>
+            <span className="text-lg font-bold tracking-tight">Creative Payment</span>
           </div>
 
           <h2 className="text-base font-semibold text-base-content/60 mb-4">
@@ -22,39 +22,40 @@ export default function LoginPage() {
           </h2>
 
           <form action={formAction} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="label text-sm font-semibold">아이디</label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">아이디</legend>
               <input
                 name="username"
                 type="text"
                 required
                 autoComplete="username"
-                className="input input-bordered w-full"
+                className="input validator w-full"
                 placeholder="운영자 ID"
               />
-            </div>
+              <p className="validator-hint">아이디를 입력하세요</p>
+            </fieldset>
 
-            <div className="space-y-1.5">
-              <label className="label text-sm font-semibold">비밀번호</label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">비밀번호</legend>
               <input
                 name="password"
                 type="password"
                 required
                 autoComplete="current-password"
-                className="input input-bordered w-full"
+                className="input validator w-full"
                 placeholder="비밀번호"
               />
-            </div>
+              <p className="validator-hint">비밀번호를 입력하세요</p>
+            </fieldset>
 
             {state?.error && (
-              <div className="text-sm text-error font-medium">{state.error}</div>
+              <div role="alert" className="alert alert-error alert-soft">
+                <span className="text-sm font-semibold">{state.error}</span>
+              </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isPending}
-              className="btn btn-primary btn-block mt-2"
-            >
+            <button type="submit" disabled={isPending} className="btn btn-primary btn-block mt-2">
+              {isPending && <span className="loading loading-spinner loading-sm" />}
               {isPending ? "로그인 중..." : "로그인"}
             </button>
           </form>

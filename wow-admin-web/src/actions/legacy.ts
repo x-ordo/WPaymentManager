@@ -2,112 +2,122 @@
 
 import { revalidatePath } from "next/cache";
 import { fetchLegacy, getCachedUserName, getCachedUserClass } from "@/lib/legacy-api";
-import { BANK_MAP } from "@/lib/bank-codes";
-import {
-  validateDate,
-  validateMoney,
-  validateName,
-  validateBankCode,
-  validateAccount,
-  validatePhone,
-  validateId,
-  validationError,
-} from "@/lib/validators";
+import { ActionResult, LegacyListResponse } from "@/lib/types/legacy";
+import { getLegacyErrorMessage } from "@/lib/error-codes";
 
-// 로그인 시 캐싱된 사용자 이름 조회
-export async function getUserName() {
-  return await getCachedUserName();
-}
-
-// 로그인 시 캐싱된 사용자 등급 조회
-export async function getUserClass() {
-  return await getCachedUserClass();
-}
-
-// [90000] 보유금액, 사용가능일, 수수료 정보
-export async function getBalanceInfo() {
-  return await fetchLegacy("/90000");
-}
-
-// [90100] 출금 한도 정보
-export async function getWithdrawalLimits() {
-  return await fetchLegacy("/90100");
-}
-
-// [21000] 입금신청내역 조회
-export async function getDepositApplications(sdate: string, edate: string) {
-  if (!validateDate(sdate) || !validateDate(edate)) {
-    return validationError("날짜 형식이 올바르지 않습니다 (YYYY-MM-DD HH:mm:ss)");
+/**
+ * [결합도 낮추기] API 결과를 UI가 바로 쓰기 좋은 ActionResult 포맷으로 변환합니다.
+ */
+async function handleActionResponse<T>(
+  path: string, 
+  apiCall: Promise<any>
+): Promise<ActionResult<T>> {
+  const result = await apiCall;
+  
+  if (result.code === "1") {
+    return { success: true, data: result };
   }
-  return await fetchLegacy("/21000", { sdate, edate });
-}
-
-// [30000] 출금통지 내역 조회
-export async function getWithdrawalNotifications(sdate: string, edate: string) {
-  if (!validateDate(sdate) || !validateDate(edate)) {
-    return validationError("날짜 형식이 올바르지 않습니다 (YYYY-MM-DD HH:mm:ss)");
+  if (result.code === "3") {
+    return { success: true, data: result, message: "조회된 정보가 없습니다." } as any;
   }
-  return await fetchLegacy("/30000", { sdate, edate });
+
+  // [에러 핸들링] 중앙 집중식 에러 메시지 매핑 활용
+  return { 
+    success: false, 
+    code: result.code, 
+    error: getLegacyErrorMessage(path, result.code) 
+  };
 }
 
-// [40000] 입금통지 내역 조회
-export async function getDepositNotifications(sdate: string, edate: string) {
-  if (!validateDate(sdate) || !validateDate(edate)) {
-    return validationError("날짜 형식이 올바르지 않습니다 (YYYY-MM-DD HH:mm:ss)");
-  }
-  return await fetchLegacy("/40000", { sdate, edate });
+/** 
+ * [서버 액션] 보유금액 및 자산 정보 
+ */
+export async function getBalanceInfo(): Promise<ActionResult> {
+  return handleActionResponse("/90000", fetchLegacy("/90000"));
 }
 
-// [50000] 출금신청 접수 (신규 등록)
-export async function applyWithdrawal(params: {
-  money: string;
-  bankuser: string;
-  bankcode: string;
-  bankname: string;
-  banknumber: string;
-  phone: string;
-}) {
-  if (!validateMoney(params.money)) return validationError("유효하지 않은 금액입니다");
-  if (!validateName(params.bankuser)) return validationError("예금주를 확인해 주세요");
-  if (!validateBankCode(params.bankcode, BANK_MAP))
-    return validationError("유효하지 않은 은행코드입니다");
-  if (!validateAccount(params.banknumber)) return validationError("계좌번호를 확인해 주세요");
-  if (!validatePhone(params.phone)) return validationError("전화번호를 확인해 주세요");
-
-  const result = await fetchLegacy("/50000", params);
-  if (result.code === "1") revalidatePath("/withdrawals");
-  return result;
+/** 
+ * [서버 액션] 출금 한도 정보 
+ */
+export async function getWithdrawalLimits(): Promise<ActionResult> {
+  return handleActionResponse("/90100", fetchLegacy("/90100"));
 }
 
-// [51000] 출금신청 리스트 조회
+/** 
+ * [데이터 페칭] 목록 조회 공통 (출금 신청 리스트 등)
+ */
 export async function getWithdrawalList(sdate: string, edate: string) {
-  if (!validateDate(sdate) || !validateDate(edate)) {
-    return validationError("날짜 형식이 올바르지 않습니다 (YYYY-MM-DD HH:mm:ss)");
-  }
-  return await fetchLegacy("/51000", { sdate, edate });
+  // [안정성] 호출 전 간단한 형식 체크 로직은 상위 호출부에서 수행
+  return await fetchLegacy<LegacyListResponse>("/51000", { sdate, edate });
 }
 
-// [51100] 출금신청 검색 (이름/번호)
+/**
+ * [레거시 연동] 출금 승인 처리 (가맹점 확인)
+ */
+export async function approveWithdrawal(uniqueid: string): Promise<ActionResult> {
+  const res = await fetchLegacy("/51400", { uniqueid });
+  if (res.code === "1") revalidatePath("/withdrawals");
+  return { 
+    success: res.code === "1", 
+    code: res.code, 
+    error: res.code !== "1" ? getLegacyErrorMessage("/51400", res.code) : undefined 
+  };
+}
+
+/**
+ * [레거시 연동] 출금 취소 처리
+ */
+export async function cancelWithdrawal(uniqueid: string): Promise<ActionResult> {
+  const res = await fetchLegacy("/51600", { uniqueid });
+  if (res.code === "1") revalidatePath("/withdrawals");
+  return { 
+    success: res.code === "1", 
+    code: res.code, 
+    error: res.code !== "1" ? getLegacyErrorMessage("/51600", res.code) : undefined 
+  };
+}
+
+/**
+ * [데이터 페칭] 입금 신청 내역 조회
+ */
+export async function getDepositApplications(sdate: string, edate: string) {
+  return await fetchLegacy<LegacyListResponse>("/21000", { sdate, edate });
+}
+
+/**
+ * [데이터 페칭] 입금 통지 내역 조회
+ */
+export async function getDepositNotifications(sdate: string, edate: string) {
+  return await fetchLegacy<LegacyListResponse>("/40000", { sdate, edate });
+}
+
+/**
+ * [데이터 페칭] 출금 통지 내역 조회
+ */
+export async function getWithdrawalNotifications(sdate: string, edate: string) {
+  return await fetchLegacy<LegacyListResponse>("/30000", { sdate, edate });
+}
+
+/**
+ * [레거시 연동] 출금 신청 접수 (50000)
+ */
+export async function applyWithdrawal(params: any): Promise<ActionResult> {
+  const res = await fetchLegacy("/50000", params);
+  if (res.code === "1") revalidatePath("/withdrawals");
+  return {
+    success: res.code === "1",
+    code: res.code,
+    error: res.code !== "1" ? getLegacyErrorMessage("/50000", res.code) : undefined
+  };
+}
+
+/**
+ * [데이터 페칭] 출금 신청 검색 (51100)
+ */
 export async function searchWithdrawals(bankuser: string, count: string = "30") {
-  if (!validateName(bankuser)) return validationError("검색어를 확인해 주세요");
-  const n = Number(count);
-  if (!Number.isInteger(n) || n < 1 || n > 100)
-    return validationError("조회 건수가 올바르지 않습니다");
-  return await fetchLegacy("/51100", { bankuser, count });
+  return await fetchLegacy<LegacyListResponse>("/51100", { bankuser, count });
 }
 
-// [51400] 출금 승인 (가맹점 확인)
-export async function approveWithdrawal(uniqueid: string) {
-  if (!validateId(uniqueid)) return validationError("유효하지 않은 ID입니다");
-  const result = await fetchLegacy("/51400", { uniqueid });
-  if (result.code === "1") revalidatePath("/withdrawals");
-  return result;
-}
-
-// [51600] 출금 취소 (데이터 취소)
-export async function cancelWithdrawal(uniqueid: string) {
-  if (!validateId(uniqueid)) return validationError("유효하지 않은 ID입니다");
-  const result = await fetchLegacy("/51600", { uniqueid });
-  if (result.code === "1") revalidatePath("/withdrawals");
-  return result;
-}
+// [응집도] 사용자 정보 조회용 (세션 캐시 활용)
+export async function getUserName() { return await getCachedUserName(); }
+export async function getUserClass() { return await getCachedUserClass(); }

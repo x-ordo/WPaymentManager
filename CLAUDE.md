@@ -108,11 +108,13 @@ Design tokens are defined in `globals.css` using Tailwind v4 `@theme` directives
 ### Key Rules
 
 - **Color**: Grayscale only. Blue/Red/Green appear solely for status indicators, never decoration.
-- **Typography**: `font-mono` + `tabular-nums` for all numeric/financial data. `font-sans` for labels.
+- **Typography**: Hana2 단일 폰트. `font-mono` 사용 금지. 숫자 데이터는 `tabular-nums`만으로 정렬. 한글 버튼/라벨은 `font-bold`(700) 권장 (`font-black`(900)은 한글 획 뭉개짐).
+- **Layout**: `max-width` 제한 없이 뷰포트 전체 활용. 외곽 패딩 `lg:p-8` (32px)로 호흡 확보.
 - **Density**: Table rows 40–56px height. Minimal padding. Maximize visible records.
+- **Contrast**: 기능 라벨(`text-xs`)은 `/50` 이상. 단위 접미사(원, 건)는 `/40` 이상. `/20`은 순수 장식에만.
 - **Corners**: Sharp (none to `rounded-sm`). This is a business tool, not a consumer app.
 - **Animation**: `duration-fast` (100ms) for hover/focus. No bouncy or decorative motion.
-- **Font sizes**: Use scale tokens (`text-2xs` through `text-3xl`). Never pixel literals like `text-[18px]`.
+- **Font sizes**: Minimum `text-sm` (13px). Use Tailwind scale tokens (`text-sm` through `text-3xl`). Never `text-xs`, bracket values, or `text-2xs`.
 - **Language**: Korean throughout UI. English only for system identifiers.
 
 ### Design System Files

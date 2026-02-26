@@ -1,1 +1,0 @@
-"""Worker invocation adapters."""

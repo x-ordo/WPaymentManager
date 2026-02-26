@@ -1,1 +1,0 @@
-"""Port interfaces for hexagonal architecture."""

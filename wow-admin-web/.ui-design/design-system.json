@@ -1,14 +1,35 @@
 {
   "name": "WOW Payment Manager Design System",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "created": "2026-02-23",
+  "updated": "2026-02-26",
   "philosophy": "Calm Control — grayscale-dominant, high-density, quiet interface for financial operations",
   "preset": "comprehensive",
   "colorModes": ["light"],
-  "outputFormats": ["css-custom-properties", "tailwind-v4-theme"],
+  "outputFormats": ["css-custom-properties", "tailwind-v4-theme", "daisyui-5-theme"],
   "tokens": {
     "colors": {
+      "daisyui-theme": {
+        "_note": "Source of truth: globals.css @plugin 'daisyui/theme' (oklch format)",
+        "primary": "oklch(42% 0.1 170)",
+        "primary-content": "oklch(100% 0 0)",
+        "secondary": "oklch(34% 0 0)",
+        "secondary-content": "oklch(100% 0 0)",
+        "accent": "oklch(70% 0.17 162)",
+        "accent-content": "oklch(100% 0 0)",
+        "neutral": "oklch(34% 0 0)",
+        "neutral-content": "oklch(100% 0 0)",
+        "base-100": "oklch(98.5% 0 0)",
+        "base-200": "oklch(96% 0.01 250)",
+        "base-300": "oklch(91% 0.01 250)",
+        "base-content": "oklch(14% 0 0)",
+        "info": "oklch(63% 0.19 240)",
+        "success": "oklch(70% 0.17 162)",
+        "warning": "oklch(75% 0.16 75)",
+        "error": "oklch(58% 0.22 27)"
+      },
       "primitive": {
+        "_note": "Reference palette (hex equivalents for design tools)",
         "gray": {
           "0": "#FFFFFF",
           "50": "#FAFAFA",
@@ -24,51 +45,76 @@
           "900": "#1A1A1A",
           "950": "#0F0F0F"
         },
+        "emerald": {
+          "primary": "#00675B",
+          "accent": "#10B981"
+        },
         "blue": {
-          "soft": "#3B82F6",
-          "muted": "#2563EB"
+          "info": "#0EA5E9"
         },
         "red": {
-          "soft": "#DC2626",
-          "muted": "#B91C1C"
+          "error": "#EF4444"
         },
-        "green": {
-          "soft": "#16A34A"
+        "amber": {
+          "warning": "#F59E0B"
         }
       },
       "semantic": {
+        "_note": "Mapped to daisyUI classes (not custom CSS vars)",
         "surface": {
-          "page": "gray-50",
-          "card": "gray-0",
-          "header": "gray-150",
-          "sidebar": "gray-0",
-          "hover": "gray-50",
-          "active": "gray-100"
+          "page": "bg-base-100",
+          "card": "bg-base-100 (via daisyUI card)",
+          "header": "bg-base-200/80",
+          "sidebar": "bg-base-100",
+          "hover": "hover:bg-primary/[0.02]",
+          "active": "bg-primary/10"
         },
         "ink": {
-          "primary": "gray-900",
-          "secondary": "gray-700",
-          "tertiary": "gray-500",
-          "muted": "gray-400",
-          "disabled": "gray-300"
+          "primary": "text-base-content",
+          "secondary": "text-base-content/80",
+          "tertiary": "text-base-content/60",
+          "muted": "text-base-content/40",
+          "disabled": "text-base-content/20"
         },
         "border": {
-          "default": "gray-200",
-          "subtle": "gray-100",
-          "strong": "gray-300",
-          "focus": "gray-900"
+          "default": "border-base-300",
+          "subtle": "divide-base-300",
+          "strong": "border-base-content/10"
         },
         "status": {
-          "info": "blue-soft",
-          "danger": "red-soft",
-          "success": "green-soft"
+          "info": "badge-info badge-soft / text-info",
+          "success": "badge-success badge-soft / text-success",
+          "warning": "badge-warning badge-soft / text-warning",
+          "error": "badge-error badge-soft / text-error"
         }
       }
     },
+    "layout": {
+      "_note": "데스크탑 활용도 극대화 — max-width 제한 없이 화면 전체 사용",
+      "sidebar": "w-64 (256px, 고정)",
+      "contentMaxWidth": "none (제한 없음, 화면 전체 활용)",
+      "contentPadding": {
+        "mobile": "16px (--outer-padding)",
+        "desktop": "32px (--outer-padding, lg breakpoint)"
+      },
+      "policy": "금융 업무 도구는 데이터 밀도가 핵심. max-w 제한을 두지 않고 뷰포트 전체를 활용하되, 외곽 패딩(32px)으로 호흡을 확보한다."
+    },
     "typography": {
       "fontFamily": {
-        "sans": "Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-        "mono": "JetBrains Mono, SF Mono, ui-monospace, Cascadia Code, monospace"
+        "primary": "Hana2, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+        "_note": "font-mono 사용하지 않음. 모든 숫자 데이터도 Hana2 + tabular-nums로 표시."
+      },
+      "fontUsage": {
+        "body": "Hana2 (inherited from :root)",
+        "page-titles": "text-2xl font-black tracking-tight text-base-content",
+        "hero-amounts": "font-black text-5xl+ tracking-tighter tabular-nums",
+        "stat-values": "font-black text-xl tabular-nums (페이지 KPI만)",
+        "table-headers": "font-bold py-4",
+        "data-values": "font-bold text-base-content/80",
+        "dates-ids": "font-bold text-base-content/70 tabular-nums",
+        "labels": "font-medium text-base-content/50 uppercase tracking-widest",
+        "suffixes": "font-normal text-base-content/40 (원, 건, KRW)",
+        "decorative": "font-light text-base-content/20 italic"
       },
       "fontSize": {
         "2xs": "0.6875rem",
@@ -81,8 +127,15 @@
         "2xl": "2rem",
         "3xl": "2.5rem"
       },
+      "fontSizeMinimum": {
+        "_note": "최소 텍스트 크기: text-sm (13px). text-xs 이하 사용 금지.",
+        "minimum": "text-sm (13px, 0.8125rem)",
+        "labels": "text-sm — 라벨, 배지, 접미사, 보조 ID 등 모든 소형 텍스트",
+        "body": "text-sm ~ text-base — 테이블 본문, 날짜/시간"
+      },
       "fontWeight": {
         "normal": 400,
+        "medium": 500,
         "semibold": 600,
         "bold": 700,
         "black": 900
@@ -108,25 +161,50 @@
       }
     },
     "borderRadius": {
+      "_note": "daisyUI theme controls radii via --radius-box/selector/field",
       "none": "0",
       "xs": "2px",
-      "sm": "4px",
+      "sm": "4px (rounded-sm)",
       "md": "6px",
-      "lg": "8px",
-      "full": "9999px"
+      "lg": "8px (rounded-lg)",
+      "xl": "12px (rounded-xl, used for cards/modals)",
+      "2xl": "16px (rounded-2xl, stats containers)",
+      "full": "9999px (rounded-full, indicators)"
     },
     "shadows": {
-      "xs": "0 1px 2px rgb(0 0 0 / 0.04)",
-      "sm": "0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04)",
-      "md": "0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)",
-      "lg": "0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04)"
+      "_note": "Use Tailwind/daisyUI shadow utilities, not custom values",
+      "sm": "shadow-sm (cards, badges, inputs)",
+      "md": "shadow-md (hero cards)",
+      "lg": "shadow-lg (dropdowns)",
+      "xl": "shadow-xl (data tables, modals)",
+      "2xl": "shadow-2xl (modal-box)"
     }
   },
+  "components": {
+    "card": "card card-border bg-base-100 shadow-sm border-base-300",
+    "card-hero": "card bg-primary text-primary-content shadow-md",
+    "table": "table table-zebra table-md",
+    "table-header": "bg-base-200/80 text-base-content/60 border-b border-base-300",
+    "stats-compact": "grid grid-cols-{n} gap-px bg-base-300 rounded-xl overflow-hidden border border-base-300 — 각 셀 bg-base-100 px-5 py-3",
+    "tabs": "tabs tabs-box bg-base-200/50 p-1 rounded-lg",
+    "tab-active": "tab-active bg-primary text-primary-content shadow-sm",
+    "badge-status": "badge badge-{status} badge-soft font-bold",
+    "button-primary": "btn btn-primary font-black",
+    "button-ghost": "btn btn-ghost",
+    "button-action-group": "join shadow-sm border border-base-300",
+    "modal": "modal-box max-w-2xl bg-base-100 border border-base-300 shadow-2xl",
+    "search-filter": "flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-base-100 px-4 py-3 rounded-xl border border-base-300 — 단일 행 인라인 바",
+    "table-filter": "bg-base-100 p-4 rounded-xl border border-base-300 shadow-sm — 결과 내 실시간 검색"
+  },
   "guidelines": {
-    "colorUsage": "Grayscale only. Color appears only for status indicators (info=blue, danger=red, success=green). Never decorative.",
-    "typography": "All numbers: font-mono + tabular-nums. Korean labels: font-sans semibold. Money amounts: font-mono bold tracking-tighter.",
-    "density": "High density. Table row height 40-48px. Compact padding. Maximize visible records.",
-    "interaction": "Transitions ≤200ms. No bouncy animations. Subtle hover bg change. Sharp corners preferred.",
-    "language": "Korean throughout UI. English only for system identifiers (IDs, codes)."
+    "colorUsage": "Grayscale dominant. Chromatic color only for: primary brand (teal), status indicators (info/success/warning/error). Use daisyUI semantic classes, never raw hex/oklch in components.",
+    "typography": "Hana2 as sole font via :root. font-mono 사용 금지 — 모든 숫자 데이터도 Hana2 + tabular-nums. 5단계 웨이트 계층: font-black(900)=페이지 제목/히어로 금액만, font-bold(700)=테이블 헤더/데이터/버튼, font-medium(500)=라벨/섹션 제목, font-normal(400)=단위 접미사/본문, font-light(300)=장식/비활성.",
+    "density": "High density. Table rows auto-sized via table-md (py-3). Compact padding. Maximize visible records. Tables use h-[calc(100vh-340px)] for viewport-filling scroll. Stats: compact grid (py-3 px-5, text-xl) with gap-px dividers. Page spacing: space-y-3 (12px).",
+    "layout": "max-width 제한 없이 화면 전체 활용. 외곽 패딩 lg:p-8 (32px)로 호흡 확보. 사이드바 w-64 고정.",
+    "interaction": "Transitions via transition-all or transition-colors. No bouncy animations. hover:bg-primary/[0.02] for table rows. Group hover for progressive disclosure of copy buttons.",
+    "language": "Korean throughout UI. English for system identifiers only (Total Balance, Asset & Transaction Overview 등 부제목 허용).",
+    "shadows": "shadow-sm for cards/inputs, shadow-xl for primary data tables, shadow-2xl for modals. shadow-primary/20 or shadow-primary/30 for colored shadow on primary buttons.",
+    "contrast": "기능 라벨(text-xs)은 반드시 /50 이상. 단위 접미사(원, 건)는 /40 이상. /20은 순수 장식에만 허용. WCAG AA (4.5:1) 준수.",
+    "bracketValues": "Bracket font sizes 및 text-xs 사용 금지. 최소 크기 text-sm (13px). 모든 텍스트는 Tailwind 표준 스케일 (text-sm, text-base, text-lg ...) 사용."
   }
 }

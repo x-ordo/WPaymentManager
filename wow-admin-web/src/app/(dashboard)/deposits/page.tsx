@@ -1,5 +1,10 @@
 import { getDepositApplications, getDepositNotifications } from "@/actions/legacy";
 import { getLegacyErrorMessage } from "@/lib/error-codes";
+import { getKSTDate } from "@/lib/utils";
+import { SearchFilter } from "@/components/SearchFilter";
+import { DepositTable } from "./DepositTable";
+import { ToastTrigger } from "@/components/ToastTrigger";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -7,16 +12,17 @@ export default async function DepositsPage(props: {
   searchParams: Promise<{ sdate?: string; edate?: string; tab?: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const today = new Date().toISOString().split("T")[0];
-  const sdate = searchParams.sdate || `${today} 00:00:00`;
-  const edate = searchParams.edate || `${today} 23:59:59`;
+
+  // KST 기반 기본값 설정
+  const sdate = searchParams.sdate || getKSTDate(0, 'start');
+  const edate = searchParams.edate || getKSTDate(0, 'end');
   const tab = searchParams.tab || "application";
 
   const appRes = await getDepositApplications(sdate, edate);
   const notiRes = await getDepositNotifications(sdate, edate);
 
   // 에러 체크 (1:성공, 3:데이터없음 제외한 모든 코드는 에러로 간주)
-  const errorRes = (appRes.code !== "1" && appRes.code !== "3") ? appRes : 
+  const errorRes = (appRes.code !== "1" && appRes.code !== "3") ? appRes :
                    (notiRes.code !== "1" && notiRes.code !== "3") ? notiRes : null;
 
   const appData = appRes.data || [];
@@ -32,173 +38,91 @@ export default async function DepositsPage(props: {
     : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header & Tabs */}
+    <div className="space-y-3">
+      {/* ─── Row 1: Header + Tabs ─── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-5">
-          <h1 className="text-2xl font-bold tracking-tight">입금 통합 관리</h1>
-          <div role="tablist" className="tabs tabs-box">
-            <a
+        <div className="flex items-center gap-6">
+          <h1 className="text-2xl font-black tracking-tight text-base-content">입금 통합 관리</h1>
+          <div role="tablist" className="tabs tabs-box bg-base-200/50 p-1 rounded-lg">
+            <Link
               role="tab"
               href={`/deposits?tab=application&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
-              className={`tab font-semibold ${tab === "application" ? "tab-active" : ""}`}
+              className={`tab font-bold transition-all ${tab === "application" ? "tab-active bg-primary text-primary-content shadow-sm" : "text-base-content/40"}`}
             >
               입금 신청 내역
               {appData.length > 0 && (
-                <span className="badge badge-ghost ml-2 font-mono">{appData.length}</span>
+                <span className={`badge badge-sm ml-2 ${tab === 'application' ? 'badge-ghost opacity-50' : 'badge-neutral'}`}>{appData.length}</span>
               )}
-            </a>
-            <a
+            </Link>
+            <Link
               role="tab"
               href={`/deposits?tab=notification&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
-              className={`tab font-semibold ${tab === "notification" ? "tab-active" : ""}`}
+              className={`tab font-bold transition-all ${tab === "notification" ? "tab-active bg-primary text-primary-content shadow-sm" : "text-base-content/40"}`}
             >
               입금 통지 이력
               {notiData.length > 0 && (
-                <span className="badge badge-ghost ml-2 font-mono">{notiData.length}</span>
+                <span className={`badge badge-sm ml-2 ${tab === 'notification' ? 'badge-ghost opacity-50' : 'badge-neutral'}`}>{notiData.length}</span>
               )}
-            </a>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="stats stats-horizontal shadow w-full">
-        <div className="stat py-5">
-          <div className="stat-title text-sm">총 입금액</div>
-          <div className="stat-value text-2xl font-mono tabular-nums">
-            {totalAmount.toLocaleString()}<span className="text-sm text-base-content/40 font-medium ml-1">원</span>
+      {/* ─── Row 2: Compact Stats ─── */}
+      <div className="grid grid-cols-3 gap-px bg-base-300 rounded-xl overflow-hidden border border-base-300">
+        <div className="bg-base-100 px-5 py-3">
+          <div className="text-sm font-medium text-base-content/50 uppercase tracking-widest">총 입금액</div>
+          <div className="text-xl font-black tabular-nums text-base-content mt-1">
+            {totalAmount.toLocaleString()}<span className="text-sm font-normal text-base-content/40 ml-1">원</span>
           </div>
         </div>
-        <div className="stat py-5">
-          <div className="stat-title text-sm">{tab === "application" ? "접수 완료" : "처리 완료"}</div>
-          <div className="stat-value text-2xl font-mono tabular-nums text-success">
-            {successCount}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
+        <div className="bg-base-100 px-5 py-3">
+          <div className="text-sm font-medium text-base-content/50 uppercase tracking-widest">{tab === "application" ? "접수 완료" : "처리 완료"}</div>
+          <div className="text-xl font-black tabular-nums text-success mt-1">
+            {successCount}<span className="text-sm font-normal text-base-content/40 ml-1">건</span>
           </div>
         </div>
-        {tab === "notification" && (
-          <div className="stat py-5">
-            <div className="stat-title text-sm">미처리</div>
-            <div className="stat-value text-2xl font-mono tabular-nums text-warning">
-              {pendingCount}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
+        {tab === "notification" ? (
+          <div className="bg-base-100 px-5 py-3">
+            <div className="text-sm font-medium text-base-content/50 uppercase tracking-widest">미처리</div>
+            <div className="text-xl font-black tabular-nums text-warning mt-1">
+              {pendingCount}<span className="text-sm font-normal text-base-content/40 ml-1">건</span>
             </div>
-          </div>
-        )}
-        <div className="stat py-5">
-          <div className="stat-title text-sm">전체 건수</div>
-          <div className="stat-value text-2xl font-mono tabular-nums">
-            {listData.length}<span className="text-sm text-base-content/40 font-medium ml-1">건</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter */}
-      <div className="card card-border bg-base-100">
-        <div className="card-body p-5">
-          <form className="flex items-center gap-3 justify-center">
-            <span className="text-sm font-medium text-base-content/50 uppercase tracking-wide">조회기간</span>
-            <input name="sdate" defaultValue={sdate} className="input input-bordered font-mono w-52" />
-            <span className="text-base-content/30 font-medium text-lg">~</span>
-            <input name="edate" defaultValue={edate} className="input input-bordered font-mono w-52" />
-            <input type="hidden" name="tab" value={tab} />
-            <button className="btn btn-primary ml-2">조회</button>
-          </form>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="card card-border bg-base-100 overflow-hidden">
-        {errorRes ? (
-          <div className="py-32 text-center">
-            <div className="text-error font-bold text-xl mb-3 flex items-center justify-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-error animate-pulse" />
-              데이터 로드 오류
-            </div>
-            <div className="text-base-content/50 text-base font-medium">
-              {getLegacyErrorMessage(tab === "application" ? "/21000" : "/40000", errorRes.code)}
-            </div>
-            <a 
-              href={`/deposits?tab=${tab}&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
-              className="btn btn-ghost btn-sm mt-6 text-base-content/30"
-            >
-              새로고침 시도
-            </a>
           </div>
         ) : (
-          <table className="table table-zebra">
-            <thead>
-            <tr className="text-sm">
-              <th>일시</th>
-              <th>가맹점</th>
-              <th>{tab === "application" ? "Unique ID" : "주문 / 트랜잭션 ID"}</th>
-              <th className="text-right">입금액</th>
-              <th>{tab === "application" ? "예금주" : "입금주"}</th>
-              <th className="text-center">상태</th>
-              {tab === "notification" && <th>응답 메시지</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {listData.length === 0 ? (
-              <tr>
-                <td colSpan={tab === "notification" ? 7 : 6} className="py-20 text-center">
-                  <div className="text-base text-base-content/40">조회된 입금 데이터가 없습니다.</div>
-                  <div className="text-sm text-base-content/30 mt-1">조회기간을 변경하여 다시 시도해 보세요.</div>
-                </td>
-              </tr>
-            ) : (
-              listData.map((row: any) => (
-                <tr key={row._UNIQUEID}>
-                  <td className="font-mono text-sm text-base-content/50 whitespace-nowrap">
-                    {row._CREATE_DATETIME || row._DATETIME}
-                  </td>
-                  <td className="font-semibold">
-                    {row._AFFILIATE_ID}
-                    {row._IN_BANK_CODE && (
-                      <span className="ml-2 text-[10px] bg-base-200 px-1 py-0.5 rounded text-base-content/40 font-mono">
-                        {row._IN_BANK_CODE}
-                      </span>
-                    )}
-                  </td>
-                  <td className="font-mono text-sm">
-                    {tab === "application" ? (
-                      <span className="text-base-content/50">{row._UNIQUEID}</span>
-                    ) : (
-                      <div>
-                        <div className="font-semibold truncate max-w-[16rem]">{row._ORDER_ID}</div>
-                        <div className="text-base-content/40 text-xs mt-0.5 truncate max-w-[16rem]">{row._TR_ID}</div>
-                      </div>
-                    )}
-                  </td>
-                  <td className="text-right font-bold font-mono tabular-nums whitespace-nowrap">
-                    {Number(row._ORDERAMT || row._AMOUNT || 0).toLocaleString()}원
-                  </td>
-                  <td className="font-semibold">{row._ORDERNM || row._IN_BANK_USERNAME}</td>
-                  <td className="text-center">
-                    <span className={`badge ${
-                      tab === "application"
-                        ? "badge-info badge-soft"
-                        : row._STATE !== "0"
-                          ? "badge-success badge-soft"
-                          : "badge-ghost"
-                    }`}>
-                      {tab === "application" ? "접수완료" : row._STATE !== "0" ? "처리완료" : "대기"}
-                    </span>
-                  </td>
-                  {tab === "notification" && (
-                    <td className="text-sm text-base-content/60">
-                      <span className="font-mono">{row._RESPONSE_CODE}</span>
-                      {row._RESPONSE_MESSAGE && (
-                        <span className="ml-1.5">{row._RESPONSE_MESSAGE}</span>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+          <div className="bg-base-100 px-5 py-3">
+            <div className="text-sm font-medium text-base-content/50 uppercase tracking-widest">전체 건수</div>
+            <div className="text-xl font-black tabular-nums text-base-content mt-1">
+              {listData.length}<span className="text-sm font-normal text-base-content/40 ml-1">건</span>
+            </div>
+          </div>
         )}
       </div>
+
+      {/* ─── Row 3: Filter Bar ─── */}
+      <SearchFilter tab={tab} sdate={sdate} edate={edate} />
+
+      {/* ─── Row 4: Table ─── */}
+      {errorRes ? (
+        <div className="card card-border bg-base-100 py-32 text-center shadow-sm">
+          <ToastTrigger message={getLegacyErrorMessage(tab === "application" ? "/21000" : "/40000", errorRes.code)} />
+          <div className="text-error font-bold text-2xl mb-3 flex items-center justify-center gap-3">
+            <span className="inline-block w-3 h-3 rounded-full bg-error animate-ping" />
+            데이터 로드 오류
+          </div>
+          <div className="text-base-content/50 text-lg font-medium">
+            {getLegacyErrorMessage(tab === "application" ? "/21000" : "/40000", errorRes.code)}
+          </div>
+          <Link
+            href={`/deposits?tab=${tab}&sdate=${encodeURIComponent(sdate)}&edate=${encodeURIComponent(edate)}`}
+            className="btn btn-ghost btn-md mt-8 text-base-content/40 hover:text-primary font-bold"
+          >
+            새로고침 시도
+          </Link>
+        </div>
+      ) : (
+        <DepositTable initialData={listData} tab={tab} />
+      )}
     </div>
   );
 }

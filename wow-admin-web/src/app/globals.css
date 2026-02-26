@@ -44,23 +44,49 @@
 
 :root {
   font-family: 'Hana2', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  
+  /* [Design System Layout Tokens] */
+  --outer-padding: 16px; /* 모바일 */
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --outer-padding: 32px; /* 데스크탑: navbar px-8과 일치 */
+  }
 }
 
 @plugin "daisyui/theme" {
   name: "wowpay";
   default: true;
   prefersdark: false;
+  color-scheme: light;
   
-  --color-primary: #404040;
+  /* [Chagok Design System Implementation] */
+  --color-primary: #0f766e; /* teal-700 (Clarity Teal) */
   --color-primary-content: #ffffff;
-  --color-secondary: #737373;
-  --color-accent: #a3a3a3;
-  --color-neutral: #404040;
-  --color-base-100: #fafafa;
-  --color-base-200: #f5f5f5;
-  --color-base-300: #e5e5e5;
   
-  --radius-box: 0.5rem;
+  --color-secondary: #0f172a; /* slate-900 (Deep Trust Blue) */
+  --color-secondary-content: #ffffff;
+  
+  --color-accent: #14b8a6; /* teal-500 */
+  --color-accent-content: #ffffff;
+  
+  --color-neutral: #1e293b; /* slate-800 */
+  --color-neutral-content: #ffffff;
+  
+  --color-base-100: #ffffff;
+  --color-base-200: #fafafa; /* neutral-50 (Calm Grey) */
+  --color-base-300: #e5e5e5; /* neutral-200 (Border Default) */
+  --color-base-content: #171717; /* neutral-900 */
+  
+  --color-info: #0ea5e9; /* sky-500 */
+  --color-success: #22c55e; /* green-500 */
+  --color-warning: #f59e0b; /* amber-500 */
+  --color-error: #ef4444; /* red-500 */
+  
+  --radius-box: 0.5rem; /* radius-lg (8px) */
+  --radius-selector: 0.375rem; /* radius-md (6px) */
+  --radius-field: 0.375rem;
 }
 
 /* Custom Scrollbar */
@@ -72,9 +98,18 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: #cbd5e1;
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d4;
+  background: #94a3b8;
+}
+
+/* Highlight for search terms */
+mark.search-highlight {
+  background-color: #fef3c7; /* amber-100 */
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 700;
 }

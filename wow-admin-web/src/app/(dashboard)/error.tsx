@@ -26,7 +26,7 @@ export default function Error({
           <p className="text-sm text-base-content/50">
             페이지를 로드할 수 없습니다. 잠시 후 다시 시도해 주세요.
             {error.digest && (
-              <span className="block text-2xs mt-1 text-base-content/30">
+              <span className="block text-sm mt-1 text-base-content/30">
                 오류코드: {error.digest}
               </span>
             )}
